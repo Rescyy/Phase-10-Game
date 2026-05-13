@@ -36,12 +36,16 @@ const cardDimensions = {
     scale: 0.5,
 };
 
-const cardAnimations = {
-    backInHand: {
+class CardAnimations {
+    static movement = {
         time: 200,
         easeOut: easeOutCubic,
-    },
-};
+    };
+
+    static getMovementAmt(time) {
+        return this.movement.easeOut(time / this.movement.time);
+    }
+}
 
 const thrownCardDimensions = {
     height: 300,
@@ -74,8 +78,12 @@ function gameLoop(currentTime) {
 }
 
 const gameContext = {
-    mouseX: 0,
-    mouseY: 0,
+    mouse: {
+        x: 0,
+        y: 0,
+        dx: 0,
+        dy: 0,
+    },
     holdContext: null,
 };
 
@@ -87,7 +95,6 @@ function initGame() {
     }
     const cardHand = new CardHand(cards);
     const thrownCards = new ThrownCards();
-    thrownCards.cards = cards.map(card => new ThrownCard(card));
     gameContext.cardHand = cardHand;
     gameContext.thrownCards = thrownCards;
 
@@ -135,8 +142,12 @@ function handleMouseUp(e) {
 }
 
 function handleMouseMove(e) {
-    gameContext.mouseX = e.offsetX;
-    gameContext.mouseY = e.offsetY;
+    let x = e.offsetX;
+    let y = e.offsetY;
+    gameContext.mouse.dx = x - gameContext.mouse.x;
+    gameContext.mouse.dy = y - gameContext.mouse.y;
+    gameContext.mouse.x = x;
+    gameContext.mouse.y = y;
     getEntityAt(e.offsetX, e.offsetY)?.handleMouseMove(e);
 }
 
@@ -210,11 +221,10 @@ class CardHand extends Entity {
             if (this.isCardBackInHand(holdContext)) {
                 func(card);
             } else {
-                const amt = cardAnimations.backInHand.easeOut(holdContext.letGoTimePassed()
-                / cardAnimations.backInHand.time);
+                const amt = CardAnimations.getMovementAmt(holdContext.letGoTimePassed());
                 const endTransform = context.getTransform();
-                const lerpX = lerp(holdContext.lastHeldX, endTransform.e, amt);
-                const lerpY = lerp(holdContext.lastHeldY, endTransform.f, amt);
+                const lerpX = lerp(holdContext.lastHoldX, endTransform.e, amt);
+                const lerpY = lerp(holdContext.lastHoldY, endTransform.f, amt);
                 const lerpRotation = lerp(0, cardRotation, amt);
                 context.setTransform(this.scale, 0, 0, this.scale, lerpX, lerpY);
                 context.rotate(lerpRotation);
@@ -224,8 +234,8 @@ class CardHand extends Entity {
         }
         if (heldCard) {
             const transform = context.getTransform();
-            transform.e = gameContext.mouseX;
-            transform.f = gameContext.mouseY;
+            transform.e = gameContext.mouse.x;
+            transform.f = gameContext.mouse.y;
             context.setTransform(transform);
             func(heldCard);
         }
@@ -233,7 +243,7 @@ class CardHand extends Entity {
     }
 
     isCardBackInHand(holdContext) {
-        return holdContext.letGoTimePassed() > cardAnimations.backInHand.time;
+        return holdContext.letGoTimePassed() > CardAnimations.movement.time;
     }
 
     draw() {
@@ -251,7 +261,7 @@ class CardHand extends Entity {
     }
 
     removeCard(card) {
-        this.cards = this.cards.filter(x => x === card);
+        this.cards = this.cards.filter(x => x !== card);
     }
 }
 
@@ -335,25 +345,26 @@ class Card extends Entity {
 }
 
 class ThrownCard extends Entity {
-    constructor(card) {
+    constructor(card, dir) {
         super();
         this.card = card;
-        this.rotated = Math.random() * Math.PI * 2;
-        this.devDir = Math.random() * Math.PI * 2;
-        this.dev = easeInQuint(Math.random()) * 20;
+        this.devDir = dir + lerp(-Math.PI/3, Math.PI/3, Math.random());
+        this.rotated = lerp(-Math.PI/8, Math.PI/8, Math.random());
+        this.dev = easeOutCubic(Math.random()) * 20;
+    }
+
+    get holdContext() {
+        return this.card.holdContext;
     }
 
     preparePosition() {
         context.rotate(this.devDir);
-        context.translate(this.dev, 0);
-        context.rotate(this.rotated);
+        context.translate(0, -this.dev);
+        context.rotate(this.rotated - this.devDir);
     }
 
     draw() {
-        withContext(() => {
-            this.preparePosition();
-            this.card.draw();
-        });
+        this.card.draw();
     }
 
     isPointIn(x, y) {
@@ -361,6 +372,10 @@ class ThrownCard extends Entity {
             this.preparePosition();
             return this.card.isPointIn(x, y);
         });
+    }
+
+    totalRotation() {
+        return this.rotated;
     }
 }
 
@@ -383,7 +398,42 @@ class ThrownCards extends Entity {
             context.strokeStyle = '#222222';
             context.fill();
             context.stroke();
-            this.cards.forEach(card => card.draw());
+            let heldCard = null;
+            forEachContext(this.cards, card => {
+                const holdContext = card.holdContext;
+                if (holdContext.isHeld) {
+                    heldCard = card;
+                    return;
+                }
+
+                card.preparePosition();
+                if (holdContext.letGoTimePassed() < CardAnimations.movement.time) {
+                    const throwTransform = context.getTransform();
+                    let rot = card.totalRotation() % (2 * Math.PI);
+                    let flipRot = Math.PI * 2 - rot;
+                    if (flipRot < rot) {
+                        rot = -flipRot;
+                    }
+                    const animation = animationLerpTransform({
+                        startX: holdContext.lastHoldX,
+                        startY: holdContext.lastHoldY,
+                        endX: throwTransform.e,
+                        endY: throwTransform.f,
+                        startRot: 0,
+                        endRot: rot,
+                        amt: CardAnimations.getMovementAmt(holdContext.letGoTimePassed()),
+                    });
+                    contextSetTransform(animation);
+                }
+                card.draw();
+            });
+            if (heldCard) {
+                const transform = context.getTransform();
+                transform.e = gameContext.mouse.x;
+                transform.f = gameContext.mouse.y;
+                contextSetTransform(transform);
+                heldCard.draw();
+            }
         });
     }
 
@@ -396,7 +446,7 @@ class ThrownCards extends Entity {
     }
 
     addCard(card) {
-        this.cards.push(new ThrownCard(card));
+        this.cards.push(new ThrownCard(card, 0));
     }
 }
 
@@ -434,6 +484,30 @@ class HoldContext {
         }
         gameContext.holdContext = null;
     }
+}
+
+function animationLerpTransform(args) {
+    const {
+        startX,
+        startY,
+        endX,
+        endY,
+        startRot,
+        endRot,
+        amt,            
+    } = args;
+    
+    if (Object.values({ startX, startY, endX, endY, startRot, endRot, amt }).some(v => v === undefined)) {
+        throw new Error("Missing required args");
+    }
+
+    const lerpX = lerp(startX, endX, amt);
+    const lerpY = lerp(startY, endY, amt);
+    const rot = lerp(startRot, endRot, amt);
+    let transform = new DOMMatrix();
+    transform.translateSelf(lerpX, lerpY);
+    transform.rotateSelf(rot / Math.PI * 180);
+    return transform;
 }
 
 // set font ahead of time
@@ -495,6 +569,16 @@ function withContext(func) {
     } finally {
         restoreContext();
     }
+}
+
+function forEachContext(arr, func) {
+    arr.forEach(x => {
+        withContext(() => func(x));
+    });
+}
+
+function contextSetTransform(m) {
+    context.setTransform(m.a, m.b, m.c, m.d, m.e, m.f);
 }
 
 function lerp(start, end, amt) {
