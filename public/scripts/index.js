@@ -36,6 +36,8 @@ const cardDimensions = {
     scale: 0.5,
 };
 
+const HoldingZ = 100;
+
 class CardAnimations {
     static movement = {
         time: 200,
@@ -84,7 +86,7 @@ const gameContext = {
         dx: 0,
         dy: 0,
     },
-    holdContext: null,
+    holdEntity: null,
 };
 
 function initGame() {
@@ -112,6 +114,10 @@ function update() {
     } = gameContext;
 }
 
+const drawContext = {
+    drawZ: []
+};
+
 function draw() {
     const {
         cardHand,
@@ -119,14 +125,29 @@ function draw() {
     } = gameContext;
     context.fillStyle = '#eeeeee';
     context.fillRect(0, 0, width, height);
-    thrownCards.x = thrownCardDimensions.x;
-    thrownCards.y = thrownCardDimensions.y;
-    thrownCards.scale = settings.scale;
-    thrownCards.draw();
+    withContext(() => {
+        thrownCards.x = thrownCardDimensions.x;
+        thrownCards.y = thrownCardDimensions.y;
+        thrownCards.scale = settings.scale;
+        thrownCards.draw();
+    });
     cardHand.x = settings.x;
     cardHand.y = settings.y;
     cardHand.scale = settings.scale;
     cardHand.draw();
+    drawContext.drawZ.sort((a, b) => a.z - b.z).forEach(x => x.func());
+    drawContext.drawZ = [];
+}
+
+function drawZ(z, func) {
+    const transform = context.getTransform();
+    drawContext.drawZ.push({
+        z,
+        func: () => withContext(() => {
+            context.setTransform(transform);
+            func();
+        }),
+    });
 }
 
 function handleClick(e) {
@@ -138,7 +159,8 @@ function handleMouseDown(e) {
 }
 
 function handleMouseUp(e) {
-    getEntityAt(e.offsetX, e.offsetY)?.handleMouseUp(e);
+    if (gameContext.holdEntity) return gameContext.holdEntity.handleMouseUp(e);
+    // return getEntityAt(e.offsetX, e.offsetY)?.handleMouseUp(e);
 }
 
 function handleMouseMove(e) {
@@ -152,7 +174,11 @@ function handleMouseMove(e) {
 }
 
 function getEntityAt(x, y) {
-    return gameContext.cardHand.getEntityAt(x, y);
+    const cardHand = gameContext.cardHand.getEntityAt(x, y);
+    if (cardHand) return cardHand;
+    const thrownCard = gameContext.thrownCards.getEntityAt(x, y);
+    if (thrownCard) return thrownCard;
+    return null;
 }
 
 class Entity {
@@ -177,6 +203,10 @@ class Entity {
         return false;
     }
 
+    getPosition() {
+        return [this.x, this.y];
+    }
+
     handleClick(e) {}
 
     handleMouseDown(e) {}
@@ -190,36 +220,94 @@ class CardHand extends Entity {
     constructor(cards) {
         super();
         this.cards = cards;
+        this.action = null;
     }
 
-    forEachEntity(func) {
+    getCardsRadians(numCards) {
         let {
             radius,
             minArcGap,
             arcLength
         } = cardHandDimensions;
-        arcLength = Math.min(minArcGap * (this.cards.length - 1), arcLength);
+        if (numCards === undefined) {
+            numCards = this.cards.length;
+        }
+        if (numCards === 0) {
+            return [];
+        }
+        if (numCards === 1) {
+            return [0];
+        }
+        arcLength = Math.min(minArcGap * (numCards - 1), arcLength);
         const radians = arcLength / radius;
-        const gapRadians = radians / (this.cards.length - 1);
+        const gapRadians = radians / (numCards - 1);
         const leftRadians = -radians / 2;
+        const cardsRadians = [];
+        for (let i = 0; i < numCards; i++) {
+            const cardRotation = leftRadians + i * gapRadians;
+            cardsRadians.push(cardRotation);
+        }
+        return cardsRadians;
+    }
+
+    forEachEntity(func, args) {
+        const {
+            excludeHolding,
+            restPosition,
+        } = args;
+        let {
+            radius,
+        } = cardHandDimensions;
+        
+        let heldCardIndex = null;
+        let cardsRadians = this.getCardsRadians(this.cards.length);
+        if (!restPosition && this.action && time.current - this.action.time < CardAnimations.movement.time) {
+            const amt = CardAnimations.getMovementAmt(time.current - this.action.time);
+            let startRadians;
+            switch (this.action.type) {
+                case 'remove':
+                    startRadians = this.getCardsRadians(this.cards.length + 1);
+                    startRadians.splice(this.action.index, 1);
+                    break;
+                case 'move':
+                    const from = this.action.from;
+                    const to = this.action.to;
+                    startRadians = [...cardsRadians];
+                    if (from < to) {
+                        for (let i = from; i < to; i++) {
+                            startRadians[i] = cardsRadians[i+1];
+                        }
+                    } else {
+                        for (let i = to; i < from; i++) {
+                           startRadians[i+1] = cardsRadians[i];
+                        }
+                    }
+                    break;
+                case 'add':
+                    startRadians = this.getCardsRadians(this.cards.length - 1);
+                    startRadians.splice(this.action.index, 0, cardsRadians[this.action.index]);
+                    break;
+            }
+            cardsRadians = startRadians
+                .map((start, i) => lerp(start, cardsRadians[i], amt));
+        }
+
         saveContext();
         this.contextPrepare();
-        let heldCard = null;
-        for (let i = 0; i < this.cards.length; i++) {
-            const card = this.cards[i];
+        forEachContext(this.cards, (card, i) => {
             const holdContext = card.holdContext;
-            const cardRotation = leftRadians + i * gapRadians;
-            if (holdContext.isHeld) {
-                heldCard = card;
-                continue;
+            const cardRotation = cardsRadians[i];
+
+            if (holdContext.isHeld && !restPosition) {
+                heldCardIndex = i;
+                return;
             }
 
-            saveContext();
             context.translate(0, radius);
             context.rotate(cardRotation);
             context.translate(0, -radius);
             if (this.isCardBackInHand(holdContext)) {
-                func(card);
+                func(card, i);
             } else {
                 const amt = CardAnimations.getMovementAmt(holdContext.letGoTimePassed());
                 const endTransform = context.getTransform();
@@ -228,16 +316,18 @@ class CardHand extends Entity {
                 const lerpRotation = lerp(0, cardRotation, amt);
                 context.setTransform(this.scale, 0, 0, this.scale, lerpX, lerpY);
                 context.rotate(lerpRotation);
-                func(card);
+                func(card, i);
             }
-            restoreContext();
-        }
-        if (heldCard) {
+        });
+
+        if (heldCardIndex !== null && !excludeHolding) {
             const transform = context.getTransform();
             transform.e = gameContext.mouse.x;
             transform.f = gameContext.mouse.y;
             context.setTransform(transform);
-            func(heldCard);
+            drawZ(HoldingZ, () => {
+                func(this.cards[heldCardIndex], heldCardIndex);
+            });
         }
         restoreContext();
     }
@@ -247,7 +337,7 @@ class CardHand extends Entity {
     }
 
     draw() {
-        this.forEachEntity(card => card.draw());
+        this.forEachEntity(card => card.draw(), {excludeHolding: false});
     }
 
     getEntityAt(x, y) {
@@ -256,12 +346,89 @@ class CardHand extends Entity {
             if (card.isPointIn(x, y)) {
                 finalEntity = card;
             }
-        });
+        }, {excludeHolding: false});
         return finalEntity;
     }
 
     removeCard(card) {
-        this.cards = this.cards.filter(x => x !== card);
+        const i = this.cards.indexOf(card);
+        this.action = new CardRemove(i);
+        this.cards.splice(i, 1);
+        return this.lastRemovedCardIndex;
+    }
+
+    moveCard(card, moveTo) {
+        const i = this.cards.indexOf(card);
+        this.action = new CardMove(i, moveTo);
+        if (i === moveTo) return;
+        this.cards.splice(i, 1);
+        this.cards.splice(moveTo, 0, card);
+    }
+
+    addCard(card, position) {
+        this.action = new CardAdd(position);
+        this.cards.splice(position, 0, card);
+    }
+
+    getCardsCenterOfRotation() {
+        return [0, cardHandDimensions.radius];
+    }
+
+    getRelativeRadians(x, y) {
+        let [handX, handY] = this.getPosition();
+        let [centerX, centerY] = this.getCardsCenterOfRotation();
+        const relativeX = handX + centerX - x;
+        const relativeY = handY + centerY - y;
+        const relativeRadians = Math.atan2(-relativeX, relativeY);
+        return relativeRadians;
+    }
+
+    getInBetweenCards(x, y) {
+        const cardsRadians = this.getCardsRadians();
+        const relativeRadians = this.getRelativeRadians(x, y);
+        if (relativeRadians <= cardsRadians[0]) {
+            return [0];
+        }
+        if (relativeRadians >= cardsRadians[cardsRadians.length - 1]) {
+            return [cardsRadians.length - 1];
+        }
+        for (let i = 0; i < cardsRadians.length - 1; i++) {
+            if (cardsRadians[i] <= relativeRadians && relativeRadians < cardsRadians[i+1]) {
+                return [i, i+1];
+            }
+        }
+        throw new Error("unreachable");
+    }
+}
+
+class CardHandAction {
+    constructor() {
+        this.time = time.current;
+    }
+}
+
+class CardRemove extends CardHandAction {
+    constructor(index) {
+        super();
+        this.type = 'remove';
+        this.index = index;
+    }
+}
+
+class CardMove extends CardHandAction {
+    constructor(from, to) {
+        super();
+        this.type = 'move';
+        this.from = from;
+        this.to = to;
+    }
+}
+
+class CardAdd extends CardHandAction {
+    constructor(index) {
+        super();
+        this.type = 'add';
+        this.index = index;
     }
 }
 
@@ -336,11 +503,48 @@ class Card extends Entity {
     }
 
     handleMouseUp(e) {
-        this.holdContext.stopHolding(e);
-        if (gameContext.thrownCards.isPointIn(e.offsetX, e.offsetY)) {
-            gameContext.cardHand.removeCard(this);
-            gameContext.thrownCards.addCard(this);
+        const {
+            cardHand,
+            thrownCards,
+        } = gameContext;
+
+        const x = e.offsetX;
+        const y = e.offsetY;
+        if (thrownCards.isPointIn(x, y)) {
+            cardHand.removeCard(this);
+            thrownCards.addCard(this);
+        } else {
+            let distances = [];
+            let releasedOver = null;
+
+            cardHand.forEachEntity((card, i) => {
+                if (card.isPointIn(x, y)) {
+                    releasedOver = i;
+                    return;
+                }
+                const transform = context.getTransform();
+                const cardX = transform.e;
+                const cardY = transform.f;
+                const dx = cardX - x;
+                const dy = cardY - y;
+                const distSq = dx * dx + dy * dy;
+                if (distSq < 200 * 200) {
+                    distances.push({
+                        i,
+                        value: distSq,
+                    });
+                }
+            }, {restPosition: true});
+    
+            if (releasedOver !== null) {
+                cardHand.moveCard(this, releasedOver);
+            } else if (distances.length !== 0) {
+                const closest = distances.reduce((a, b) => a.value < b.value ? a : b, {value: Infinity});
+                cardHand.moveCard(this, closest.i);
+            }
         }
+        
+        this.holdContext.stopHolding(e);
     }
 }
 
@@ -377,6 +581,63 @@ class ThrownCard extends Entity {
     totalRotation() {
         return this.rotated;
     }
+
+    handleMouseDown(e) {
+        this.holdContext.startHolding(e, this);
+    }
+
+    handleMouseUp(e) {
+        const x = e.offsetX;
+        const y = e.offsetY;
+        const {
+            cardHand,
+            thrownCards,
+        } = gameContext;
+
+        const distances = [];
+        
+        cardHand.forEachEntity((_, i) => {
+            const transform = context.getTransform();
+            const cardX = transform.e;
+            const cardY = transform.f;
+            const dx = cardX - x;
+            const dy = cardY - y;
+            const distSq = dx * dx + dy * dy;
+            distances.push({
+                i,
+                value: distSq,
+            });
+        }, {restPosition: true});
+        
+        const inBetweenCards = cardHand.getInBetweenCards(x, y);
+        const inBetweenIndex = (() => {
+            if (inBetweenCards.length === 1) {
+                if (inBetweenCards[0] === 0) return 0;
+                return inBetweenCards[0] + 1;
+            }
+            return inBetweenCards[1];
+        })();
+        const distanceToCard = distances.find(x => x.i === inBetweenIndex);
+        
+        const maxDist = 200;
+        let index = null;
+        if (distanceToCard) {
+            if (distanceToCard.value < maxDist * maxDist) {
+                index = inBetweenIndex;
+            }
+        } else {
+            if (distances[cardHand.cards.length - 1].value < maxDist * maxDist) {
+                index = cardHand.cards.length;
+            }
+        }
+
+        if (index !== null) {
+            thrownCards.removeCard();
+            cardHand.addCard(this.card, index);
+        }
+
+        this.holdContext.stopHolding(e);
+    }
 }
 
 class ThrownCards extends Entity {
@@ -409,11 +670,9 @@ class ThrownCards extends Entity {
                 card.preparePosition();
                 if (holdContext.letGoTimePassed() < CardAnimations.movement.time) {
                     const throwTransform = context.getTransform();
-                    let rot = card.totalRotation() % (2 * Math.PI);
-                    let flipRot = Math.PI * 2 - rot;
-                    if (flipRot < rot) {
-                        rot = -flipRot;
-                    }
+
+                    let rot = normalizeRadians(card.totalRotation());
+
                     const animation = animationLerpTransform({
                         startX: holdContext.lastHoldX,
                         startY: holdContext.lastHoldY,
@@ -432,7 +691,7 @@ class ThrownCards extends Entity {
                 transform.e = gameContext.mouse.x;
                 transform.f = gameContext.mouse.y;
                 contextSetTransform(transform);
-                heldCard.draw();
+                drawZ(HoldingZ, () => heldCard.draw());
             }
         });
     }
@@ -447,6 +706,22 @@ class ThrownCards extends Entity {
 
     addCard(card) {
         this.cards.push(new ThrownCard(card, 0));
+    }
+
+    getEntityAt(x, y) {
+        if (this.cards.length === 0) return null;
+        return withContext(() => {
+            this.contextPrepare();
+            const lastCard = this.cards[this.cards.length - 1];
+            if (lastCard && lastCard.isPointIn(x, y)) {
+                return lastCard;
+            }
+            return null;
+        });
+    }
+
+    removeCard() {
+        this.cards.pop();
     }
 }
 
@@ -471,7 +746,7 @@ class HoldContext {
         this.startHold = e.timeStamp;
         this.startHoldX = e.offsetX;
         this.startHoldY = e.offsetY;
-        gameContext.holdContext = entity;
+        gameContext.holdEntity = entity;
     }
 
     stopHolding(e) {
@@ -482,7 +757,7 @@ class HoldContext {
             this.lastHoldX = e.offsetX;
             this.lastHoldY = e.offsetY;
         }
-        gameContext.holdContext = null;
+        gameContext.holdEntity = null;
     }
 }
 
@@ -572,8 +847,8 @@ function withContext(func) {
 }
 
 function forEachContext(arr, func) {
-    arr.forEach(x => {
-        withContext(() => func(x));
+    arr.forEach((x, i) => {
+        withContext(() => func(x, i));
     });
 }
 
@@ -585,25 +860,16 @@ function lerp(start, end, amt) {
     return (1 - amt) * start + amt * end;
 }
 
-function lerpTransform(start, end, amt) {
-    start = start.scaleSelf(1 - amt);
-    end = end.scaleSelf(amt);
-    const final = new DOMMatrix();
-    final.a = start.a + end.a;
-    final.b = start.b + end.b;
-    final.c = start.c + end.c;
-    final.d = start.d + end.d;
-    final.e = start.e + end.e;
-    final.f = start.f + end.f;
-    return final;
-}
-
 function easeOutCubic(x) {
     return 1 - Math.pow(1 - x, 3);
 }
 
 function easeInQuint(x) {
     return x * x * x * x * x;
+}
+
+function normalizeRadians(x) {
+    return x - 2 * Math.PI * Math.floor((x + Math.PI) / 2 / Math.PI);
 }
 
 (function renderSettings() {
