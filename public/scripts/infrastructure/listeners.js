@@ -1,5 +1,4 @@
 import { GameCanvas } from './gameCanvas.js';
-import { getEntityAt } from './gameContext.js';
 import { GameContext } from "./gameContext.js";
 
 export function setupMouseListeners() {
@@ -10,11 +9,11 @@ export function setupMouseListeners() {
 }
 
 export function handleClick(e) {
-    getEntityAt(e.offsetX, e.offsetY)?.handleClick(e);
+    GameContext.getEntityAt(e.offsetX, e.offsetY)?.handleClick(e);
 }
 
 export function handleMouseDown(e) {
-    getEntityAt(e.offsetX, e.offsetY)?.handleMouseDown(e);
+    GameContext.getEntityAt(e.offsetX, e.offsetY)?.handleMouseDown(e);
 }
 
 export function handleMouseUp(e) {
@@ -28,6 +27,6 @@ export function handleMouseMove(e) {
     GameContext.mouse.dy = y - GameContext.mouse.y;
     GameContext.mouse.x = x;
     GameContext.mouse.y = y;
-    getEntityAt(e.offsetX, e.offsetY)?.handleMouseMove(e);
+    GameContext.getEntityAt(e.offsetX, e.offsetY)?.handleMouseMove(e);
 }
 

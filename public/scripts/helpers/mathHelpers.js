@@ -24,3 +24,17 @@ export function animationLerpTransform(args) {
     return transform;
 }
 
+export function shuffleArray(array) {
+    // Create a copy to avoid mutating the original array
+    const shuffled = [...array]; 
+    
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        // Generate a random index from 0 to i
+        const j = Math.floor(Math.random() * (i + 1));
+        
+        // Swap elements using destructuring assignment
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    
+    return shuffled;
+}

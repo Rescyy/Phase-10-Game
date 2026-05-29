@@ -8,18 +8,11 @@ import { Entity } from "./entity.js";
 
 
 export class Card extends Entity {
-    constructor(color, number) {
+    constructor(cardInfo) {
         super();
         this.scale = CardDimensions.scale;
-        if (typeof (number) !== 'number' || number > 12 || number < 1) {
-            throw new Error(`Cannot have Card number ${number}`);
-        }
-        if (!Object.values(CardColors).includes(color)) {
-            throw new Error(`Cannot have Card color ${color}`);
-        }
-        this.color = color;
-        this.number = number;
         this.holdContext = new HoldContext();
+        this.info = cardInfo;
     }
 
     draw() {
@@ -41,13 +34,13 @@ export class Card extends Entity {
         DrawContext.translate(margin, margin);
         DrawContext.scale(1 - 2 * margin / width, 1 - 2 * margin / height);
         DrawContext.roundRect(0, 0, width, height, accentRadius);
-        DrawContext.fillStyle = this.color;
+        DrawContext.fillStyle = this.info.color;
         DrawContext.fill();
         DrawContext.fillStyle = 'white';
         DrawContext.transform(1, incline, 0, 1, 0, -width * incline / 2);
         DrawContext.fillRect(-margin / 2, accent - margin / 2, width + margin, height - 2 * accent + margin);
-        DrawContext.fillStyle = this.color;
-        drawTextInCenter(this.number.toString(), 0, 0, width, height);
+        DrawContext.fillStyle = this.info.color;
+        drawTextInCenter(this.info.number.toString(), 0, 0, width, height);
         restoreContext();
     }
 

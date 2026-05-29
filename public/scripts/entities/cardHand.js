@@ -129,15 +129,15 @@ export class CardHand extends Entity {
 
     draw() {
         this.forEachEntity(card => card.draw(), { excludeHolding: false });
-        withContext(() => {
-            this.contextPrepare();
-            drawZ(100, () => {
-                DrawContext.fillStyle = 'green';
-                DrawContext.beginPath();
-                DrawContext.arc(0, 0, 10, 0, 2 * Math.PI, false);
-                DrawContext.fill();
-            });
-        });
+        // withContext(() => {
+        //     this.contextPrepare();
+        //     drawZ(100, () => {
+        //         DrawContext.fillStyle = 'green';
+        //         DrawContext.beginPath();
+        //         DrawContext.arc(0, 0, 10, 0, 2 * Math.PI, false);
+        //         DrawContext.fill();
+        //     });
+        // });
     }
 
     getEntityAt(x, y) {

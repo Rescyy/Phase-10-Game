@@ -45,8 +45,8 @@ export function gameLoop(currentTime) {
         DrawContext.font = "20px Georgia";
         DrawContext.fillStyle = "black";
         drawTextInCenter(currentTime, 0, 0, 100, 100);
+        nextFrame();
     }
-    nextFrame();
 }
 export function nextFrame() {
     requestAnimationFrame(gameLoop);
