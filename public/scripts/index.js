@@ -503,46 +503,67 @@ class Card extends Entity {
     }
 
     handleMouseUp(e) {
+        const x = e.offsetX;
+        const y = e.offsetY;
+        
         const {
             cardHand,
             thrownCards,
         } = gameContext;
-
-        const x = e.offsetX;
-        const y = e.offsetY;
+        
+        
         if (thrownCards.isPointIn(x, y)) {
             cardHand.removeCard(this);
             thrownCards.addCard(this);
         } else {
-            let distances = [];
-            let releasedOver = null;
+            const distances = [];
+            let index = null;
 
             cardHand.forEachEntity((card, i) => {
                 if (card.isPointIn(x, y)) {
-                    releasedOver = i;
+                    index = i + 1;
                     return;
                 }
                 const transform = context.getTransform();
                 const cardX = transform.e;
                 const cardY = transform.f;
-                const dx = cardX - x;
-                const dy = cardY - y;
+                const dx = (cardX - x) / cardDimensions.width / 2;
+                const dy = (cardY - y) / cardDimensions.height;
                 const distSq = dx * dx + dy * dy;
-                if (distSq < 200 * 200) {
-                    distances.push({
-                        i,
-                        value: distSq,
-                    });
-                }
+                distances.push({
+                    i,
+                    value: distSq,
+                });
             }, {restPosition: true});
-    
-            if (releasedOver !== null) {
-                cardHand.moveCard(this, releasedOver);
-            } else if (distances.length !== 0) {
-                const closest = distances.reduce((a, b) => a.value < b.value ? a : b, {value: Infinity});
-                cardHand.moveCard(this, closest.i);
+            
+            if (index === null) {
+                const inBetweenCards = cardHand.getInBetweenCards(x, y);
+                const inBetweenIndex = (() => {
+                    if (inBetweenCards.length === 1) {
+                        if (inBetweenCards[0] === 0) return 0;
+                        return inBetweenCards[0];
+                    }
+                    return inBetweenCards[1];
+                })();
+                const distanceToCard = distances.find(x => x.i === inBetweenIndex);
+                
+                const maxDist = 0.75;
+                if (distanceToCard) {
+                    if (distanceToCard.value < maxDist * maxDist) {
+                        index = inBetweenIndex;
+                    }
+                } else {
+                    if (distances[cardHand.cards.length - 1].value < maxDist * maxDist) {
+                        index = cardHand.cards.length;
+                    }
+                }
+            }
+
+            if (index !== null) {
+                cardHand.moveCard(this, index);
             }
         }
+
         
         this.holdContext.stopHolding(e);
     }
@@ -600,8 +621,8 @@ class ThrownCard extends Entity {
             const transform = context.getTransform();
             const cardX = transform.e;
             const cardY = transform.f;
-            const dx = cardX - x;
-            const dy = cardY - y;
+            const dx = (cardX - x) / cardDimensions.width / 2;
+            const dy = (cardY - y) / cardDimensions.height;
             const distSq = dx * dx + dy * dy;
             distances.push({
                 i,
@@ -619,7 +640,7 @@ class ThrownCard extends Entity {
         })();
         const distanceToCard = distances.find(x => x.i === inBetweenIndex);
         
-        const maxDist = 200;
+        const maxDist = 0.5;
         let index = null;
         if (distanceToCard) {
             if (distanceToCard.value < maxDist * maxDist) {
