@@ -47,6 +47,10 @@ class CardAnimations {
     static getMovementAmt(time) {
         return this.movement.easeOut(time / this.movement.time);
     }
+
+    static animationFinished(time) {
+        return this.movement.time <= time;
+    }
 }
 
 const thrownCardDimensions = {
@@ -261,7 +265,7 @@ class CardHand extends Entity {
         
         let heldCardIndex = null;
         let cardsRadians = this.getCardsRadians(this.cards.length);
-        if (!restPosition && this.action && time.current - this.action.time < CardAnimations.movement.time) {
+        if (!restPosition && this.action && !CardAnimations.animationFinished(this.action.timePassed)) {
             const amt = CardAnimations.getMovementAmt(time.current - this.action.time);
             let startRadians;
             switch (this.action.type) {
@@ -333,7 +337,7 @@ class CardHand extends Entity {
     }
 
     isCardBackInHand(holdContext) {
-        return holdContext.letGoTimePassed() > CardAnimations.movement.time;
+        return CardAnimations.animationFinished(holdContext.letGoTimePassed());
     }
 
     draw() {
@@ -404,6 +408,10 @@ class CardHand extends Entity {
 class CardHandAction {
     constructor() {
         this.time = time.current;
+    }
+
+    get timePassed() {
+        return time.current - this.time;
     }
 }
 
@@ -689,7 +697,7 @@ class ThrownCards extends Entity {
                 }
 
                 card.preparePosition();
-                if (holdContext.letGoTimePassed() < CardAnimations.movement.time) {
+                if (!CardAnimations.animationFinished(holdContext.letGoTimePassed())) {
                     const throwTransform = context.getTransform();
 
                     let rot = normalizeRadians(card.totalRotation());
