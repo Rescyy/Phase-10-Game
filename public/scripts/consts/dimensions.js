@@ -9,12 +9,16 @@ export const CardDimensions = {
     accentRadius: 12,
     incline: -0.1,
     margin: 11,
-    scale: 0.5,
+    scale: 1,
     rainbowGap: 10,
     starOffsetY: 10,
     starOuterRadius: 112,
     starInnerRadius: 40,
     starForegroundRatio: 0.78,
+    blockRadius: 65,
+    blockCircleWidth: 52,
+    blockLineWidth: 45,
+    blockMargin: 14,
 };
 
 export const CardHandDimensions = {

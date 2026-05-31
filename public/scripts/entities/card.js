@@ -166,16 +166,17 @@ function drawNumberCard(number, color) {
 function drawWildCard() {
     const {
         width, height, radius, margin, incline, fontSize, accent, accentRadius,
+        starOuterRadius, starInnerRadius, starForegroundRatio, starOffsetY
     } = CardDimensions;
     drawCardBackground('black');
     drawCardRainbow();
     const totalHeight = height - 2 * accent + margin;
-    const starY = totalHeight / 2 + CardDimensions.starOffsetY;
+    const starY = totalHeight / 2 + starOffsetY;
     const starX = width / 2;
-    drawStar(starX, starY, CardDimensions.starOuterRadius, CardDimensions.starInnerRadius, 'white');
+    drawStar(starX, starY, starOuterRadius, starInnerRadius, 'white');
     drawStar(starX, starY, 
-        CardDimensions.starOuterRadius * CardDimensions.starForegroundRatio, 
-        CardDimensions.starInnerRadius * CardDimensions.starForegroundRatio, 
+        starOuterRadius * starForegroundRatio, 
+        starInnerRadius * starForegroundRatio, 
         'black');
 }
 
@@ -199,8 +200,38 @@ function drawStar(x, y, outerRadius, innerRadius, color) {
 function drawBlockCard() {
     const {
         width, height, radius, margin, incline, fontSize, accent, accentRadius,
+        blockCircleWidth, blockLineWidth, blockMargin
     } = CardDimensions;
     drawCardBackground('black');
     drawCardRainbow();
-    // todo draw block
+    const totalHeight = height - 2 * accent + margin;
+    withContext(() => {
+        DrawContext.translate(width / 2, totalHeight / 2);
+        drawBlockCircle('white', blockCircleWidth);
+        drawBlockLine('white', blockLineWidth);
+        drawBlockCircle('black', blockCircleWidth - blockMargin);
+        drawBlockLine('black', blockLineWidth - blockMargin);
+    });
+}
+
+function drawBlockCircle(color, lineWidth) {
+    withContext(() => {
+        const blockRadius = CardDimensions.blockRadius;
+        DrawContext.beginPath();
+        DrawContext.rotate(Math.PI / 4);
+        DrawContext.moveTo(0, -blockRadius);
+        DrawContext.rotate(Math.PI);
+        DrawContext.lineTo(0, -blockRadius);
+        DrawContext.lineWidth = lineWidth;
+        DrawContext.strokeStyle = color;
+        DrawContext.stroke();
+    });
+}
+
+function drawBlockLine(color, lineWidth) {
+    DrawContext.beginPath();
+    DrawContext.arc(0, 0, CardDimensions.blockRadius, 0, 2 * Math.PI, false);
+    DrawContext.lineWidth = lineWidth;
+    DrawContext.strokeStyle = color;
+    DrawContext.stroke();
 }

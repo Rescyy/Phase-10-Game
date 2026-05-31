@@ -13,7 +13,8 @@ export class CardDeck {
     }
 
     generate() {
-        const numbered = [new WildCard()];
+        // const numbered = [new WildCard()];
+        const numbered = [new BlockCard()];
         // const numbered = [];
 
         // for (let i = 1; i <= 12; i++) {
