@@ -13,13 +13,15 @@ export class CardDeck {
     }
 
     generate() {
-        const numbered = [];
-        for (let i = 1; i <= 12; i++) {
-            CardColors.getAll().forEach(color => {
-                numbered.push(new NumberCard(i, color));
-                numbered.push(new NumberCard(i, color));
-            });
-        }
+        const numbered = [new WildCard()];
+        // const numbered = [];
+
+        // for (let i = 1; i <= 12; i++) {
+        //     CardColors.getAll().forEach(color => {
+        //         numbered.push(new NumberCard(i, color));
+        //         numbered.push(new NumberCard(i, color));
+        //     });
+        // }
 
         this.deck = numbered;
         // const wildCards = Array.from({length: 8}, () => new WildCard());
@@ -37,6 +39,11 @@ export class CardDeck {
     }
 
     takeHand() {
+        if (this.deck.length < 10) {
+            const deck = this.deck;
+            this.deck = [];
+            return deck;
+        }
         return Array.from({ length: 10 }, () => this.takeCard());
     }
 }

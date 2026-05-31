@@ -5,11 +5,16 @@ export const CardDimensions = {
     width: 225,
     fontSize: 212,
     radius: 18,
-    accent: 62,
+    accent: 65,
     accentRadius: 12,
     incline: -0.1,
     margin: 11,
     scale: 0.5,
+    rainbowGap: 10,
+    starOffsetY: 10,
+    starOuterRadius: 112,
+    starInnerRadius: 40,
+    starForegroundRatio: 0.78,
 };
 
 export const CardHandDimensions = {

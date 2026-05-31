@@ -1,5 +1,6 @@
 import { CardColors } from "../consts/colors.js";
 import { CardDimensions } from "../consts/dimensions.js";
+import { CardType } from "../domain/cardInfo.js";
 import { drawTextInCenter } from "../helpers/drawHelpers.js";
 import { saveContext, DrawContext, restoreContext, withContext } from "../infrastructure/drawContext.js";
 import { GameContext } from "../infrastructure/gameContext.js";
@@ -16,32 +17,22 @@ export class Card extends Entity {
     }
 
     draw() {
-        const {
-            width, height, radius, margin, incline, fontSize, accent, accentRadius,
-        } = CardDimensions;
-        saveContext();
-        this.contextPrepare();
-        DrawContext.translate(-CardDimensions.width / 2, -CardDimensions.height / 2);
-        DrawContext.beginPath();
-        DrawContext.roundRect(0, 0, width, height, radius);
-        DrawContext.font = `${fontSize}px Georgia`;
-        DrawContext.fillStyle = 'white';
-        DrawContext.lineWidth = 4;
-        DrawContext.strokeStyle = 'gray';
-        DrawContext.stroke();
-        DrawContext.fill();
-        DrawContext.beginPath();
-        DrawContext.translate(margin, margin);
-        DrawContext.scale(1 - 2 * margin / width, 1 - 2 * margin / height);
-        DrawContext.roundRect(0, 0, width, height, accentRadius);
-        DrawContext.fillStyle = this.info.color;
-        DrawContext.fill();
-        DrawContext.fillStyle = 'white';
-        DrawContext.transform(1, incline, 0, 1, 0, -width * incline / 2);
-        DrawContext.fillRect(-margin / 2, accent - margin / 2, width + margin, height - 2 * accent + margin);
-        DrawContext.fillStyle = this.info.color;
-        drawTextInCenter(this.info.number.toString(), 0, 0, width, height);
-        restoreContext();
+        withContext(() => {
+            this.contextPrepare();
+            switch (this.info.type) {
+                case CardType.NUMBER:
+                    drawNumberCard(this.info.number, this.info.color);
+                    break;
+                case CardType.WILD:
+                    drawWildCard();
+                    break;
+                case CardType.BLOCK:
+                    drawBlockCard();
+                    break;
+                default:
+                    throw new Error(`Card type ${this.info.type} doesn't exist`);
+            }
+        });
     }
 
     isPointIn(x, y) {
@@ -124,4 +115,92 @@ export class Card extends Entity {
 
         this.holdContext.stopHolding(e);
     }
+}
+
+function drawCardBackground(color) {
+    const {
+        width, height, radius, margin, incline, fontSize, accent, accentRadius,
+    } = CardDimensions;
+    DrawContext.translate(-CardDimensions.width / 2, -CardDimensions.height / 2);
+    DrawContext.beginPath();
+    DrawContext.roundRect(0, 0, width, height, radius);
+    DrawContext.font = `${fontSize}px Georgia`;
+    DrawContext.fillStyle = 'white';
+    DrawContext.lineWidth = 4;
+    DrawContext.strokeStyle = 'gray';
+    DrawContext.stroke();
+    DrawContext.fill();
+    DrawContext.beginPath();
+    DrawContext.translate(margin, margin);
+    DrawContext.scale(1 - 2 * margin / width, 1 - 2 * margin / height);
+    DrawContext.roundRect(0, 0, width, height, accentRadius);
+    DrawContext.fillStyle = color;
+    DrawContext.fill();
+    DrawContext.fillStyle = 'white';
+    DrawContext.transform(1, incline, 0, 1, 0, accent - (width * incline + margin) / 2);
+    DrawContext.fillRect(-margin / 2, 0, width + margin, height - 2 * accent + margin);
+    DrawContext.fillStyle = color;
+}
+
+function drawCardRainbow() {
+    const {
+        width, height, margin, accent, rainbowGap,
+    } = CardDimensions;
+    const totalHeight = height - 2 * accent + margin;
+    const rowHeight = (totalHeight - 5 * rainbowGap) / 4;
+    const colors = CardColors.getAll();
+    for (let i = 0; i < 4; i++) {
+        DrawContext.fillStyle = colors[i];
+        DrawContext.fillRect(0, rainbowGap + i * (rainbowGap + rowHeight), width, rowHeight);
+    }
+}
+
+function drawNumberCard(number, color) {
+    const {
+        width, height,
+    } = CardDimensions;
+    drawCardBackground(color);
+    drawTextInCenter(number.toString(), 0, 0, width, height);
+}
+
+function drawWildCard() {
+    const {
+        width, height, radius, margin, incline, fontSize, accent, accentRadius,
+    } = CardDimensions;
+    drawCardBackground('black');
+    drawCardRainbow();
+    const totalHeight = height - 2 * accent + margin;
+    const starY = totalHeight / 2 + CardDimensions.starOffsetY;
+    const starX = width / 2;
+    drawStar(starX, starY, CardDimensions.starOuterRadius, CardDimensions.starInnerRadius, 'white');
+    drawStar(starX, starY, 
+        CardDimensions.starOuterRadius * CardDimensions.starForegroundRatio, 
+        CardDimensions.starInnerRadius * CardDimensions.starForegroundRatio, 
+        'black');
+}
+
+function drawStar(x, y, outerRadius, innerRadius, color) {
+    withContext(() => {
+        DrawContext.translate(x, y);
+        DrawContext.beginPath();
+        DrawContext.moveTo(0, -outerRadius);
+        for (let i = 0; i < 5; i++) {
+            DrawContext.lineTo(0, -outerRadius);
+            DrawContext.rotate(2 * Math.PI / 10);
+            DrawContext.lineTo(0, -innerRadius);
+            DrawContext.rotate(2 * Math.PI / 10);
+        }
+        DrawContext.fillStyle = color;
+        DrawContext.closePath();
+        DrawContext.fill();
+    });
+}
+
+function drawBlockCard() {
+    const {
+        width, height, radius, margin, incline, fontSize, accent, accentRadius,
+    } = CardDimensions;
+    drawCardBackground('black');
+    drawCardRainbow();
+    // todo draw block
 }

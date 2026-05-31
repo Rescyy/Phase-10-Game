@@ -1,10 +1,10 @@
 export const CardColors = {
-    RED: 'red',
-    GREEN: 'green',
-    BLUE: 'blue',
-    YELLOW: 'yellow',
+    RED: '#eb4034',
+    GREEN: '#309a42',
+    BLUE: '#0071cf',
+    YELLOW: '#faee02',
     getAll() {
-        return [this.RED, this.GREEN, this.BLUE, this.YELLOW];
+        return [this.RED, this.BLUE, this.GREEN, this.YELLOW];
     },
 };
 
