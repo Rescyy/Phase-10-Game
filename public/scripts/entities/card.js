@@ -14,6 +14,7 @@ export class Card extends Entity {
         this.scale = CardDimensions.scale;
         this.holdContext = new HoldContext();
         this.info = cardInfo;
+        this.isNew = false;
     }
 
     draw() {
@@ -32,6 +33,12 @@ export class Card extends Entity {
                 default:
                     throw new Error(`Card type ${this.info.type} doesn't exist`);
             }
+        });
+    }
+
+    static drawBack() {
+        withContext(() => {
+            drawCardOutline('black', 'black');
         });
     }
 
@@ -58,19 +65,23 @@ export class Card extends Entity {
 
         const {
             cardHand, thrownCards,
-        } = GameContext;
-
+        } = GameContext.entities;
 
         if (thrownCards.isPointIn(x, y)) {
             cardHand.removeCard(this);
             thrownCards.addCard(this);
         } else {
             const distances = [];
+            const cardIndex = cardHand.getCardIndex(this);
             let index = null;
 
             cardHand.forEachEntity((card, i) => {
                 if (card.isPointIn(x, y)) {
-                    index = i + 1;
+                    if (i <= cardIndex) {
+                        index = i + 1;
+                    } else {
+                        index = i;
+                    }
                     return;
                 }
                 const transform = DrawContext.getTransform();
@@ -109,7 +120,12 @@ export class Card extends Entity {
             }
 
             if (index !== null) {
-                cardHand.moveCard(this, index);
+                if (this.isNew) {
+                    cardHand.addCard(this, index);
+                    this.isNew = false;
+                } else {
+                    cardHand.moveCard(this, index);
+                }
             }
         }
 
@@ -117,19 +133,25 @@ export class Card extends Entity {
     }
 }
 
-function drawCardBackground(color) {
+function drawCardOutline(fillStyle, strokeStyle) {
     const {
-        width, height, radius, margin, incline, fontSize, accent, accentRadius,
+        width, height, radius,
     } = CardDimensions;
-    DrawContext.translate(-CardDimensions.width / 2, -CardDimensions.height / 2);
+    DrawContext.translate(-width / 2, -height / 2);
     DrawContext.beginPath();
     DrawContext.roundRect(0, 0, width, height, radius);
-    DrawContext.font = `${fontSize}px Georgia`;
-    DrawContext.fillStyle = 'white';
-    DrawContext.lineWidth = 4;
-    DrawContext.strokeStyle = 'gray';
-    DrawContext.stroke();
+    DrawContext.fillStyle = fillStyle;
+    DrawContext.lineWidth = 2;
+    DrawContext.strokeStyle = strokeStyle;
     DrawContext.fill();
+    DrawContext.stroke();
+}
+
+function drawCardBackground(color) {
+    const {
+        width, height, radius, margin, incline, accent, accentRadius,
+    } = CardDimensions;
+    drawCardOutline('white', 'gray');
     DrawContext.beginPath();
     DrawContext.translate(margin, margin);
     DrawContext.scale(1 - 2 * margin / width, 1 - 2 * margin / height);
@@ -138,16 +160,16 @@ function drawCardBackground(color) {
     DrawContext.fill();
     DrawContext.fillStyle = 'white';
     DrawContext.transform(1, incline, 0, 1, 0, accent - (width * incline + margin) / 2);
-    DrawContext.fillRect(-margin / 2, 0, width + margin, height - 2 * accent + margin);
-    DrawContext.fillStyle = color;
+    const insideHeight = height - 2 * accent + margin;
+    DrawContext.fillRect(-margin / 2, 0, width + margin, insideHeight);
+    return insideHeight;
 }
 
-function drawCardRainbow() {
+function drawCardRainbow(insideHeight) {
     const {
         width, height, margin, accent, rainbowGap,
     } = CardDimensions;
-    const totalHeight = height - 2 * accent + margin;
-    const rowHeight = (totalHeight - 5 * rainbowGap) / 4;
+    const rowHeight = (insideHeight - 5 * rainbowGap) / 4;
     const colors = CardColors.getAll();
     for (let i = 0; i < 4; i++) {
         DrawContext.fillStyle = colors[i];
@@ -157,10 +179,12 @@ function drawCardRainbow() {
 
 function drawNumberCard(number, color) {
     const {
-        width, height,
+        width, height, accent, margin, fontSize
     } = CardDimensions;
-    drawCardBackground(color);
-    drawTextInCenter(number.toString(), 0, 0, width, height);
+    const insideHeight = drawCardBackground(color);
+    DrawContext.fillStyle = color;
+    DrawContext.font = `${fontSize}px Georgia`;
+    drawTextInCenter(number.toString(), 0, 0, width, insideHeight);
 }
 
 function drawWildCard() {
@@ -168,10 +192,9 @@ function drawWildCard() {
         width, height, radius, margin, incline, fontSize, accent, accentRadius,
         starOuterRadius, starInnerRadius, starForegroundRatio, starOffsetY
     } = CardDimensions;
-    drawCardBackground('black');
-    drawCardRainbow();
-    const totalHeight = height - 2 * accent + margin;
-    const starY = totalHeight / 2 + starOffsetY;
+    const insideHeight = drawCardBackground('black');
+    drawCardRainbow(insideHeight);
+    const starY = insideHeight / 2 + starOffsetY;
     const starX = width / 2;
     drawStar(starX, starY, starOuterRadius, starInnerRadius, 'white');
     drawStar(starX, starY, 
@@ -202,11 +225,10 @@ function drawBlockCard() {
         width, height, radius, margin, incline, fontSize, accent, accentRadius,
         blockCircleWidth, blockLineWidth, blockMargin
     } = CardDimensions;
-    drawCardBackground('black');
-    drawCardRainbow();
-    const totalHeight = height - 2 * accent + margin;
+    const insideHeight = drawCardBackground('black');
+    drawCardRainbow(insideHeight);
     withContext(() => {
-        DrawContext.translate(width / 2, totalHeight / 2);
+        DrawContext.translate(width / 2, insideHeight / 2);
         drawBlockCircle('white', blockCircleWidth);
         drawBlockLine('white', blockLineWidth);
         drawBlockCircle('black', blockCircleWidth - blockMargin);
@@ -234,4 +256,8 @@ function drawBlockLine(color, lineWidth) {
     DrawContext.lineWidth = lineWidth;
     DrawContext.strokeStyle = color;
     DrawContext.stroke();
+}
+
+function drawBack() {
+
 }

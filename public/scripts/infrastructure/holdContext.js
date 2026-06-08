@@ -5,10 +5,10 @@ export class HoldContext {
     constructor() {
         this.isHeld = false;
         this.holding = null;
-        this.startHold = 0;
+        this.startHold = Number.NEGATIVE_INFINITY;
         this.startHoldX = 0;
         this.startHoldY = 0;
-        this.lastHold = 0;
+        this.lastHold = Number.NEGATIVE_INFINITY;
         this.lastHoldX = 0;
         this.lastHoldY = 0;
     }

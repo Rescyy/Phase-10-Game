@@ -49,7 +49,7 @@ export class ThrownCard extends Entity {
         const y = e.offsetY;
         const {
             cardHand, thrownCards,
-        } = GameContext;
+        } = GameContext.entities;
 
         let index = null;
 
@@ -64,7 +64,11 @@ export class ThrownCard extends Entity {
         } else {
             const distances = [];
     
-            cardHand.forEachEntity((_, i) => {
+            cardHand.forEachEntity((card, i) => {
+                if (card.isPointIn(x, y)) {
+                    index = i + 1;
+                    return;
+                }
                 const transform = DrawContext.getTransform();
                 const cardX = transform.e;
                 const cardY = transform.f;
@@ -77,27 +81,29 @@ export class ThrownCard extends Entity {
                 });
             }, { restPosition: true });
     
-            const inBetweenCards = cardHand.getInBetweenCards(x, y);
-    
-            const inBetweenIndex = (() => {
-                if (inBetweenCards.length === 1) {
-                    if (inBetweenCards[0] === 0) return 0;
-                    return inBetweenCards[0] + 1;
-                }
-                return inBetweenCards[1];
-            })();
-            
-            const distanceToCard = distances.find(x => x.i === inBetweenIndex);
-    
-            const maxDist = ThrownCardDimensions.maxPickupRatio;
-    
-            if (distanceToCard) {
-                if (distanceToCard.value < maxDist * maxDist) {
-                    index = inBetweenIndex;
-                }
-            } else {
-                if (distances[cardHand.cards.length - 1].value < maxDist * maxDist) {
-                    index = cardHand.cards.length;
+            if (index === null) {
+                const inBetweenCards = cardHand.getInBetweenCards(x, y);
+        
+                const inBetweenIndex = (() => {
+                    if (inBetweenCards.length === 1) {
+                        if (inBetweenCards[0] === 0) return 0;
+                        return inBetweenCards[0] + 1;
+                    }
+                    return inBetweenCards[1];
+                })();
+                
+                const distanceToCard = distances.find(x => x.i === inBetweenIndex);
+        
+                const maxDist = ThrownCardDimensions.maxPickupRatio;
+        
+                if (distanceToCard) {
+                    if (distanceToCard.value < maxDist * maxDist) {
+                        index = inBetweenIndex;
+                    }
+                } else {
+                    if (distances[cardHand.cards.length - 1].value < maxDist * maxDist) {
+                        index = cardHand.cards.length;
+                    }
                 }
             }
         }

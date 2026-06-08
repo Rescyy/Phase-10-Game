@@ -1,7 +1,7 @@
 import {DrawContext} from '../infrastructure/drawContext.js';
 
 export class Entity {
-     construtor() {
+    constructor() {
         this.x = 0;
         this.y = 0;
         this.scale = 1;

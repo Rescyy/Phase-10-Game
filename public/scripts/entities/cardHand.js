@@ -83,44 +83,34 @@ export class CardHand extends Entity {
                 .map((start, i) => lerp(start, cardsRadians[i], amt));
         }
 
-        saveContext();
-        this.contextPrepare();
-        forEachContext(this.cards, (card, i) => {
-            const holdContext = card.holdContext;
-            const cardRotation = cardsRadians[i];
-
-            if (holdContext.isHeld && !restPosition) {
-                heldCardIndex = i;
-                return;
-            }
-
-            DrawContext.translate(0, radius);
-            DrawContext.rotate(cardRotation);
-            DrawContext.translate(0, -radius);
-            if (this.isCardBackInHand(holdContext)) {
-                func(card, i);
-            } else {
-                const amt = CardAnimations.getMovementAmt(holdContext.letGoTimePassed());
-                const endTransform = DrawContext.getTransform();
-                const lerpX = lerp(holdContext.lastHoldX, endTransform.e, amt);
-                const lerpY = lerp(holdContext.lastHoldY, endTransform.f, amt);
-                const lerpRotation = lerp(0, cardRotation, amt);
-                DrawContext.setTransform(this.scale, 0, 0, this.scale, lerpX, lerpY);
-                DrawContext.rotate(lerpRotation);
-                func(card, i);
-            }
-        });
-
-        if (heldCardIndex !== null && !excludeHolding) {
-            const transform = DrawContext.getTransform();
-            transform.e = GameContext.mouse.x;
-            transform.f = GameContext.mouse.y;
-            DrawContext.setTransform(transform);
-            drawZ(HoldingZ, () => {
-                func(this.cards[heldCardIndex], heldCardIndex);
+        withContext(() => {
+            this.contextPrepare();
+            forEachContext(this.cards, (card, i) => {
+                const holdContext = card.holdContext;
+                const cardRotation = cardsRadians[i];
+    
+                if (holdContext.isHeld && !restPosition) {
+                    heldCardIndex = i;
+                    return;
+                }
+    
+                DrawContext.translate(0, radius);
+                DrawContext.rotate(cardRotation);
+                DrawContext.translate(0, -radius);
+                if (this.isCardBackInHand(holdContext)) {
+                    func(card, i);
+                } else {
+                    const amt = CardAnimations.getMovementAmt(holdContext.letGoTimePassed());
+                    const endTransform = DrawContext.getTransform();
+                    const lerpX = lerp(holdContext.lastHoldX, endTransform.e, amt);
+                    const lerpY = lerp(holdContext.lastHoldY, endTransform.f, amt);
+                    const lerpRotation = lerp(0, cardRotation, amt);
+                    DrawContext.setTransform(this.scale, 0, 0, this.scale, lerpX, lerpY);
+                    // DrawContext.rotate(lerpRotation);
+                    func(card, i);
+                }
             });
-        }
-        restoreContext();
+        });
     }
 
     isCardBackInHand(holdContext) {
@@ -151,14 +141,14 @@ export class CardHand extends Entity {
     }
 
     removeCard(card) {
-        const i = this.cards.indexOf(card);
+        const i = this.getCardIndex(card);
         this.action = new CardRemove(i);
         this.cards.splice(i, 1);
         return this.lastRemovedCardIndex;
     }
 
     moveCard(card, moveTo) {
-        const i = this.cards.indexOf(card);
+        const i = this.getCardIndex(card);
         this.action = new CardMove(i, moveTo);
         if (i === moveTo) return;
         this.cards.splice(i, 1);
@@ -201,5 +191,9 @@ export class CardHand extends Entity {
             }
         }
         throw new Error("unreachable");
+    }
+
+    getCardIndex(card) {
+        return this.cards.indexOf(card);
     }
 }

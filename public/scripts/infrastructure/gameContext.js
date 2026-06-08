@@ -1,7 +1,9 @@
-import { CardDeck } from "../domain/cardDeck.js";
 import { Card } from "../entities/card.js";
-import { CardHand } from "../entities/cardhand.js";
+import { CardHand } from "../entities/cardHand.js";
 import { ThrownCards } from "../entities/thrownCards.js";
+import { CardDeckDimensions, CardHandDimensions, ThrownCardDimensions } from "../consts/dimensions.js";
+import { CardDeck } from "../entities/cardDeck.js";
+import { GameService } from "../services/gameService.js";
 
 export const GameContext = {
     mouse: {
@@ -13,24 +15,43 @@ export const GameContext = {
     
     holdEntity: null,
 
-    deck: null,
+    gameService: null,
 
     getEntityAt(x, y) {
-        const cardHand = GameContext.cardHand.getEntityAt(x, y);
-        if (cardHand) return cardHand;
-        const thrownCard = GameContext.thrownCards.getEntityAt(x, y);
-        if (thrownCard) return thrownCard;
-        return null;
+        let entity = null;
+        this.forEachEntity(e => {
+            const entityAt = e.getEntityAt(x, y);
+            if (entityAt) {
+                entity = entityAt;
+            }
+        });
+        return entity;
     },
 
     setupGame() {
-        this.deck = new CardDeck();
-        this.deck.initialise();
-        const cards = this.deck.takeHand().map(x => new Card(x));
+        this.gameService = new GameService();
+        this.gameService.initialiseDeck();
+        const cards = this.gameService.takeHand().map(x => new Card(x));
         const cardHand = new CardHand(cards);
+        cardHand.x = CardHandDimensions.x;
+        cardHand.y = CardHandDimensions.y;
         const thrownCards = new ThrownCards();
-        this.cardHand = cardHand;
-        this.thrownCards = thrownCards;
+        thrownCards.x = ThrownCardDimensions.x;
+        thrownCards.y = ThrownCardDimensions.y;
+        const cardDeck = new CardDeck();
+        cardDeck.x = CardDeckDimensions.x;
+        cardDeck.y = CardDeckDimensions.y;
+        this.entities = {
+            cardHand,
+            thrownCards,
+            cardDeck,
+        };
+    },
+
+    forEachEntity(func) {
+        for (const [key, entity] of Object.entries(this.entities)) {
+            func(entity);
+        }
     },
 };
 
