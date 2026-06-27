@@ -7,6 +7,7 @@ import { normalizeRadians, animationLerpTransform } from "../helpers/mathHelpers
 import { DrawContext, withContext, forEachContext, contextSetTransform } from "../infrastructure/drawContext.js";
 import { GameContext } from "../infrastructure/gameContext.js";
 import { Entity } from "./entity.js";
+import { HoldContext } from '../infrastructure/holdContext.js';
 
 
 export class ThrownCards extends Entity {
@@ -14,6 +15,10 @@ export class ThrownCards extends Entity {
         super();
         this.cards = [];
     }
+
+    get x() {return ThrownCardDimensions.x}
+    get y() {return ThrownCardDimensions.y}
+    get scale() {return ThrownCardDimensions.scale}
 
     drawPath() {
         DrawContext.beginPath();
@@ -28,40 +33,34 @@ export class ThrownCards extends Entity {
             DrawContext.strokeStyle = '#222222';
             DrawContext.fill();
             DrawContext.stroke();
-            let heldCard = null;
             forEachContext(this.cards, card => {
-                const holdContext = card.holdContext;
-                if (holdContext.isHeld) {
-                    heldCard = card;
+                if (HoldContext.isHolding(card)) {
+                    HoldContext.scale = this.scale;
                     return;
                 }
 
                 card.preparePosition();
-                if (!CardAnimations.animationFinished(holdContext.letGoTimePassed())) {
+                const letGoTimePassed = HoldContext.letGoTimePassed(card);
+                if (!CardAnimations.animationFinished(letGoTimePassed)) {
+                    
                     const throwTransform = DrawContext.getTransform();
 
                     let rot = normalizeRadians(card.totalRotation());
 
                     const animation = animationLerpTransform({
-                        startX: holdContext.lastHoldX,
-                        startY: holdContext.lastHoldY,
+                        startX: HoldContext.lastHoldX,
+                        startY: HoldContext.lastHoldY,
                         endX: throwTransform.e,
                         endY: throwTransform.f,
                         startRot: 0,
                         endRot: rot,
-                        amt: CardAnimations.getMovementAmt(holdContext.letGoTimePassed()),
+                        amt: CardAnimations.getMovementAmt(letGoTimePassed),
                     });
                     contextSetTransform(animation);
+                    DrawContext.scale(this.scale, this.scale);
                 }
                 card.draw();
             });
-            if (heldCard) {
-                const transform = DrawContext.getTransform();
-                transform.e = GameContext.mouse.x;
-                transform.f = GameContext.mouse.y;
-                contextSetTransform(transform);
-                drawZ(HoldingZ, () => heldCard.draw());
-            }
         });
     }
 
@@ -74,7 +73,9 @@ export class ThrownCards extends Entity {
     }
 
     addCard(card) {
-        this.cards.push(new ThrownCard(card, 0));
+        const thrownCard = new ThrownCard(card, 0);
+        this.cards.push(thrownCard);
+        return thrownCard;
     }
 
     getEntityAt(x, y) {

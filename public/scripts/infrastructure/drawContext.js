@@ -1,3 +1,4 @@
+import { drawZ } from '../helpers/drawHelpers.js';
 import {GameCanvas} from './gameCanvas.js';
 
 export const DrawContext = GameCanvas.getContext('2d');
@@ -25,6 +26,15 @@ export function withContext(func) {
     }
 }
 
+export function clearContextPreserveTranslation() {
+    const context = DrawContext.getTransform();
+    context.a = 1;
+    context.b = 0;
+    context.c = 0;
+    context.d = 1;
+    contextSetTransform(context);
+}
+
 let saveCount = 0;
 
 export function saveContext() {
@@ -43,5 +53,3 @@ export function restoreAllContext() {
         DrawContext.restore();
     }
 }
-
-

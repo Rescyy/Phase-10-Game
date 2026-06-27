@@ -4,6 +4,7 @@ import { ThrownCards } from "../entities/thrownCards.js";
 import { CardDeckDimensions, CardHandDimensions, ThrownCardDimensions } from "../consts/dimensions.js";
 import { CardDeck } from "../entities/cardDeck.js";
 import { GameService } from "../services/gameService.js";
+import { ThrownCard } from "../entities/thrownCard.js";
 
 export const GameContext = {
     mouse: {
@@ -30,17 +31,12 @@ export const GameContext = {
 
     setupGame() {
         this.gameService = new GameService();
-        this.gameService.initialiseDeck();
+        this.gameService.initialiseGame();
         const cards = this.gameService.takeHand().map(x => new Card(x));
         const cardHand = new CardHand(cards);
-        cardHand.x = CardHandDimensions.x;
-        cardHand.y = CardHandDimensions.y;
         const thrownCards = new ThrownCards();
-        thrownCards.x = ThrownCardDimensions.x;
-        thrownCards.y = ThrownCardDimensions.y;
+        thrownCards.cards.push(new ThrownCard(new Card(this.gameService.thrownCards[0])))
         const cardDeck = new CardDeck();
-        cardDeck.x = CardDeckDimensions.x;
-        cardDeck.y = CardDeckDimensions.y;
         this.entities = {
             cardHand,
             thrownCards,

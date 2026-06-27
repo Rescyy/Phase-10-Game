@@ -19,14 +19,12 @@ export class GameService {
 
     canTakeDeckCard() {
         if (!this.isCurrentPlayerTurn()) {
-            throw new ActionError("Cannot take card, it's not your turn");
+            this.throwActionError("Cannot take card, it's not your turn");
         }
 
         if (this.cardTaken) {
-            throw new ActionError("Cannot take another card");
+            this.throwActionError("Cannot take another card");
         }
-
-        return ActionResult.success();
     }
 
     takeDeckCard() {
@@ -40,7 +38,7 @@ export class GameService {
     canTakeThrownCard() {
         this.canTakeDeckCard();
         if (this.thrownCards.length === 0) {
-            throw new ActionError("There are no thrown cards to take");
+            this.throwActionError("There are no thrown cards to take");
         }
     }
 
@@ -54,44 +52,43 @@ export class GameService {
 
     canThrowCard(card) {
         if (!this.isCurrentPlayerTurn()) {
-            throw new ActionError("Cannot throw card, it's not your turn");
+            this.throwActionError("Cannot throw card, it's not your turn");
         }
 
-        if (!this.cardHand.any(x => x === card)) {
-            throw new ActionError("Cannot throw a card that is not in your hand")
+        if (!this.cardHand.some(x => x === card)) {
+            this.throwActionError("Cannot throw a card that is not in your hand")
         }
         
         if (!this.cardTaken) {
-            throw new ActionError("Cannot throw card, you should take one first");
+            this.throwActionError("Cannot throw card, you should take one first");
         }
     }
 
     throwCard(card) {
         this.canThrowCard(card);
-        this.hand.delete(card);
-        this.thrownCard = true;
-        this.thrownCardService.throwCard(card);
+        this.cardHand = this.cardHand.filter(x => x !== card);
+        this.cardThrown = true;
+        this.thrownCards.push(card);
+        this.endTurn();
     }
 
     canEndTurn() {
         if (!this.isCurrentPlayerTurn()) {
-            throw new ActionError("Cannot end turn, it's not your turn");
+            this.throwActionError("Cannot end turn, it's not your turn");
         }
 
         if (!this.cardTaken) {
-            throw new ActionError("Cannot end turn, you must take a card first");
+            this.throwActionError("Cannot end turn, you must take a card first");
         }
 
         if (!this.cardThrown) {
-            throw new ActionError("Cannot end turn, you must throw away a card");
+            this.throwActionError("Cannot end turn, you must throw away a card");
         }
-
-        return ActionResult.success();
     }
 
     endTurn() {
         this.canEndTurn();
-        return true;
+        this.newTurn();
     }
 
     isCurrentPlayerTurn() {
@@ -101,6 +98,18 @@ export class GameService {
     initialiseDeck() {
         this.generateDeck();
         this.shuffleDeck();
+    }
+
+    setFirstCard() {
+        const card = this.deck.pop();
+        if (card) {
+            this.thrownCards.push(card);
+        }
+    }
+
+    initialiseGame() {
+        this.initialiseDeck();
+        this.setFirstCard();
     }
 
     generateDeck() {
@@ -129,6 +138,13 @@ export class GameService {
             this.deck = [];
             return deck;
         }
-        return Array.from({ length: 10 }, () => this.deck.pop());
+        this.cardHand = Array.from({ length: 10 }, () => this.deck.pop());
+        return this.cardHand;
+    }
+
+    throwActionError(message) {
+        if (true) {
+            throw new ActionError(message);
+        }
     }
 }

@@ -7,6 +7,7 @@ export const settings = {
 
 (function renderSettings() {
     const settingsDiv = document.getElementById("settings");
+    if (!settingsDiv) return;
     for (const [key, value] of Object.entries(settings)) {
         const settingNode = document.createElement('div');
         const settingName = document.createElement('span');

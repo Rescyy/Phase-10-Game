@@ -1,7 +1,7 @@
 import { CardColors } from "../consts/colors.js";
-import { CardDimensions } from "../consts/dimensions.js";
+import { CardDimensions, CardHandDimensions } from "../consts/dimensions.js";
 import { CardType } from "../domain/cardInfo.js";
-import { drawTextInCenter } from "../helpers/drawHelpers.js";
+import { drawDebug, drawTextInCenter } from "../helpers/drawHelpers.js";
 import { saveContext, DrawContext, restoreContext, withContext } from "../infrastructure/drawContext.js";
 import { GameContext } from "../infrastructure/gameContext.js";
 import { HoldContext } from "../infrastructure/holdContext.js";
@@ -11,15 +11,20 @@ import { Entity } from "./entity.js";
 export class Card extends Entity {
     constructor(cardInfo) {
         super();
-        this.scale = CardDimensions.scale;
-        this.holdContext = new HoldContext();
         this.info = cardInfo;
         this.isNew = false;
     }
 
+    get scale() { return CardDimensions.scale }
+
     draw() {
         withContext(() => {
             this.contextPrepare();
+            drawDebug(() => {
+                DrawContext.beginPath();
+                DrawContext.arc(0, 0, 10, 0, 2 * Math.PI);
+                DrawContext.fill();
+            });
             switch (this.info.type) {
                 case CardType.NUMBER:
                     drawNumberCard(this.info.number, this.info.color);
@@ -56,7 +61,7 @@ export class Card extends Entity {
     }
 
     handleMouseDown(e) {
-        this.holdContext.startHolding(e, this);
+        HoldContext.startHolding(e, this);
     }
 
     handleMouseUp(e) {
@@ -67,69 +72,76 @@ export class Card extends Entity {
             cardHand, thrownCards,
         } = GameContext.entities;
 
-        if (thrownCards.isPointIn(x, y)) {
-            cardHand.removeCard(this);
-            thrownCards.addCard(this);
-        } else {
-            const distances = [];
-            const cardIndex = cardHand.getCardIndex(this);
-            let index = null;
-
-            cardHand.forEachEntity((card, i) => {
-                if (card.isPointIn(x, y)) {
-                    if (i <= cardIndex) {
-                        index = i + 1;
+        try {
+            if (thrownCards.isPointIn(x, y)) {
+                GameContext.gameService.throwCard(this.info);
+                cardHand.removeCard(this);
+                HoldContext.swapHolding(thrownCards.addCard(this));
+            } else {
+                const distances = [];
+                const cardIndex = cardHand.getCardIndex(this);
+                let index = null;
+    
+                cardHand.forEachEntity((card, i) => {
+                    if (card.isPointIn(x, y)) {
+                        if (i <= cardIndex || this.isNew) {
+                            index = i + 1;
+                        } else {
+                            index = i;
+                        }
+                        return;
+                    }
+                    const transform = DrawContext.getTransform();
+                    const cardX = transform.e;
+                    const cardY = transform.f;
+                    const dx = (cardX - x) / CardDimensions.width / 2;
+                    const dy = (cardY - y) / CardDimensions.height;
+                    const distSq = dx * dx + dy * dy;
+                    distances.push({
+                        i,
+                        value: distSq,
+                    });
+                }, { restPosition: true });
+    
+                if (index === null) {
+                    const inBetweenCards = cardHand.getInBetweenCards(x, y);
+                    const inBetweenIndex = (() => {
+                        if (inBetweenCards.length === 1) {
+                            if (inBetweenCards[0] === 0) return 0;
+                            let i = inBetweenCards[0];
+                            if (this.isNew) {
+                                i++;
+                            }
+                            return i;
+                        }
+                        return inBetweenCards[1];
+                    })();
+                    const distanceToCard = distances.find(x => x.i === inBetweenIndex);
+    
+                    const maxDist = 0.75;
+                    if (distanceToCard) {
+                        if (distanceToCard.value < maxDist * maxDist || this.isNew) {
+                            index = inBetweenIndex;
+                        }
                     } else {
-                        index = i;
+                        if (distances[cardHand.cards.length - 1].value < maxDist * maxDist || this.isNew) {
+                            index = cardHand.cards.length;
+                        }
                     }
-                    return;
                 }
-                const transform = DrawContext.getTransform();
-                const cardX = transform.e;
-                const cardY = transform.f;
-                const dx = (cardX - x) / CardDimensions.width / 2;
-                const dy = (cardY - y) / CardDimensions.height;
-                const distSq = dx * dx + dy * dy;
-                distances.push({
-                    i,
-                    value: distSq,
-                });
-            }, { restPosition: true });
-
-            if (index === null) {
-                const inBetweenCards = cardHand.getInBetweenCards(x, y);
-                const inBetweenIndex = (() => {
-                    if (inBetweenCards.length === 1) {
-                        if (inBetweenCards[0] === 0) return 0;
-                        return inBetweenCards[0];
-                    }
-                    return inBetweenCards[1];
-                })();
-                const distanceToCard = distances.find(x => x.i === inBetweenIndex);
-
-                const maxDist = 0.75;
-                if (distanceToCard) {
-                    if (distanceToCard.value < maxDist * maxDist) {
-                        index = inBetweenIndex;
-                    }
-                } else {
-                    if (distances[cardHand.cards.length - 1].value < maxDist * maxDist) {
-                        index = cardHand.cards.length;
+    
+                if (index !== null) {
+                    if (this.isNew) {
+                        cardHand.addCard(this, index);
+                        this.isNew = false;
+                    } else {
+                        cardHand.moveCard(this, index);
                     }
                 }
             }
-
-            if (index !== null) {
-                if (this.isNew) {
-                    cardHand.addCard(this, index);
-                    this.isNew = false;
-                } else {
-                    cardHand.moveCard(this, index);
-                }
-            }
+        } finally {
+            HoldContext.stopHolding(e);
         }
-
-        this.holdContext.stopHolding(e);
     }
 }
 

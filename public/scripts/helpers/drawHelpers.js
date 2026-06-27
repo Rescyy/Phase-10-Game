@@ -39,3 +39,13 @@ export function drawZ(z, func) {
     });
 }
 
+export function drawDebug(func) {
+    if (true) {
+        drawZ(101, () => {
+            withContext(() => {
+                DrawContext.fillStyle = DrawContext.strokeStyle = 'magenta';
+                func();
+            });
+        });
+    }
+}

@@ -1,13 +1,14 @@
-import { drawZ } from '../helpers/drawHelpers.js';
+import { drawDebug, drawZ } from '../helpers/drawHelpers.js';
 import { CardRemove, CardMove, CardAdd } from './cardHandAction.js';
 import { CardAnimations } from "../consts/animations.js";
 import { HoldingZ } from "../consts/consts.js";
 import { CardHandDimensions } from "../consts/dimensions.js";
 import { lerp } from "../helpers/mathHelpers.js";
-import { saveContext, forEachContext, DrawContext, restoreContext, withContext } from "../infrastructure/drawContext.js";
+import { saveContext, forEachContext, DrawContext, restoreContext, withContext, clearContextPreserveTranslation } from "../infrastructure/drawContext.js";
 import { GameContext } from "../infrastructure/gameContext.js";
 import { Time } from "../infrastructure/time.js";
 import { Entity } from "./entity.js";
+import { HoldContext } from '../infrastructure/holdContext.js';
 
 
 export class CardHand extends Entity {
@@ -16,6 +17,10 @@ export class CardHand extends Entity {
         this.cards = cards;
         this.action = null;
     }
+
+    get x() {return CardHandDimensions.x};
+    get y() {return CardHandDimensions.y};
+    get scale() {return CardHandDimensions.scale};
 
     getCardsRadians(numCards) {
         let {
@@ -50,7 +55,6 @@ export class CardHand extends Entity {
             radius,
         } = CardHandDimensions;
 
-        let heldCardIndex = null;
         let cardsRadians = this.getCardsRadians(this.cards.length);
         if (!restPosition && this.action && !CardAnimations.animationFinished(this.action.timePassed)) {
             const amt = CardAnimations.getMovementAmt(Time.current - this.action.time);
@@ -86,48 +90,51 @@ export class CardHand extends Entity {
         withContext(() => {
             this.contextPrepare();
             forEachContext(this.cards, (card, i) => {
-                const holdContext = card.holdContext;
                 const cardRotation = cardsRadians[i];
     
-                if (holdContext.isHeld && !restPosition) {
-                    heldCardIndex = i;
+                if (HoldContext.isHolding(card) && !restPosition) {
+                    HoldContext.scale = this.scale;
                     return;
                 }
     
-                DrawContext.translate(0, radius);
+                DrawContext.translate(0, radius / this.scale);
                 DrawContext.rotate(cardRotation);
-                DrawContext.translate(0, -radius);
-                if (this.isCardBackInHand(holdContext)) {
+                DrawContext.translate(0, -radius / this.scale);
+                if (this.isCardBackInHand(card)) {
                     func(card, i);
                 } else {
-                    const amt = CardAnimations.getMovementAmt(holdContext.letGoTimePassed());
-                    const endTransform = DrawContext.getTransform();
-                    const lerpX = lerp(holdContext.lastHoldX, endTransform.e, amt);
-                    const lerpY = lerp(holdContext.lastHoldY, endTransform.f, amt);
-                    const lerpRotation = lerp(0, cardRotation, amt);
-                    DrawContext.setTransform(this.scale, 0, 0, this.scale, lerpX, lerpY);
-                    // DrawContext.rotate(lerpRotation);
-                    func(card, i);
+                    drawZ(1, () => {
+                        const amt = CardAnimations.getMovementAmt(HoldContext.letGoTimePassed(card));
+                        const endTransform = DrawContext.getTransform();
+                        const lerpX = lerp(HoldContext.lastHoldX, endTransform.e, amt);
+                        const lerpY = lerp(HoldContext.lastHoldY, endTransform.f, amt);
+                        const lerpRotation = lerp(0, cardRotation, amt);
+                        DrawContext.setTransform(this.scale, 0, 0, this.scale, lerpX, lerpY);
+                        func(card, i);
+                    });
                 }
             });
         });
     }
 
-    isCardBackInHand(holdContext) {
-        return CardAnimations.animationFinished(holdContext.letGoTimePassed());
+    isCardBackInHand(card) {
+        return CardAnimations.animationFinished(HoldContext.letGoTimePassed(card));
     }
 
     draw() {
+        drawDebug(() => {
+            this.contextPrepare();
+            clearContextPreserveTranslation();
+            DrawContext.beginPath();
+            DrawContext.arc(0, 0, 10, 0, 2 * Math.PI);
+            DrawContext.fill();
+            DrawContext.strokeRect(-CardHandDimensions.width / 2, 0, CardHandDimensions.width, CardHandDimensions.height);
+            DrawContext.beginPath();
+            DrawContext.arc(0, CardHandDimensions.radius, CardHandDimensions.radius, 
+                (-Math.PI - CardHandDimensions.arcRadians) / 2, (-Math.PI + CardHandDimensions.arcRadians) / 2);
+            DrawContext.stroke();
+        });
         this.forEachEntity(card => card.draw(), { excludeHolding: false });
-        // withContext(() => {
-        //     this.contextPrepare();
-        //     drawZ(100, () => {
-        //         DrawContext.fillStyle = 'green';
-        //         DrawContext.beginPath();
-        //         DrawContext.arc(0, 0, 10, 0, 2 * Math.PI, false);
-        //         DrawContext.fill();
-        //     });
-        // });
     }
 
     getEntityAt(x, y) {
@@ -158,6 +165,7 @@ export class CardHand extends Entity {
     addCard(card, position) {
         this.action = new CardAdd(position);
         this.cards.splice(position, 0, card);
+        return card;
     }
 
     getCardsCenterOfRotation() {

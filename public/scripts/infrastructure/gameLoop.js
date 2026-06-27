@@ -4,6 +4,7 @@ import { DrawContext, restoreAllContext, withContext } from "./drawContext.js";
 import { ErrorContext } from "./errorContext.js";
 import { GameCanvas } from "./gameCanvas.js";
 import { GameContext } from "./gameContext.js";
+import { HoldContext } from "./holdContext.js";
 import { settings } from "./settings.js";
 import { updateTime } from "./time.js";
 
@@ -19,18 +20,14 @@ export function draw() {
         entities
     } = GameContext;
     DrawContext.fillStyle = '#eeeeee';
-    DrawContext.fillRect(0, 0, GameCanvas.width, GameCanvas.height);   
+    DrawContext.fillRect(0, 0, GameCanvas.width, GameCanvas.height);
+    DrawContext.fillStyle = '#bbbbbb';
+    DrawContext.fillRect(0, 0, 100, 100);
     GameContext.forEachEntity(x => x.draw());
-    DrawContext.drawZ.sort((a, b) => a.z - b.z).forEach(x => x.func());
+    DrawContext.drawZ.filter(x => x.z <= 100).sort((a, b) => a.z - b.z).forEach(x => x.func());
+    HoldContext.draw();
+    DrawContext.drawZ.filter(x => x.z > 100).sort((a, b) => a.z - b.z).forEach(x => x.func());
     DrawContext.drawZ = [];
-    
-    if (GameContext.holdEntity) {
-        const transform = DrawContext.getTransform();
-        transform.e = GameContext.mouse.x;
-        transform.f = GameContext.mouse.y;
-        DrawContext.setTransform(transform);
-        GameContext.holdEntity.draw();
-    }
 }
 
 export function gameLoop(currentTime) {

@@ -2,6 +2,7 @@ import { ActionError } from '../domain/actionError.js';
 import { ErrorContext } from './errorContext.js';
 import { GameCanvas } from './gameCanvas.js';
 import { GameContext } from "./gameContext.js";
+import { HoldContext } from './holdContext.js';
 
 export function setupMouseListeners() {
     GameCanvas.addEventListener('mousedown', handleMouseDown);
@@ -23,9 +24,7 @@ export function handleMouseDown(e) {
 }
 
 export function handleMouseUp(e) {
-    handleAction(() => {
-        if (GameContext.holdEntity) GameContext.holdEntity.handleMouseUp(e);
-    });
+    handleAction(() => HoldContext.handleMouseUp(e));
 }
 
 export function handleMouseMove(e) {
@@ -46,6 +45,8 @@ function handleAction(func) {
     } catch(e) {
         if (e instanceof ActionError) {
             ErrorContext.setActionError(e);
+        } else {
+            throw e;
         }
     }
 }

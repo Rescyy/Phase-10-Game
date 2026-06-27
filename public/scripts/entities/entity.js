@@ -2,10 +2,11 @@ import {DrawContext} from '../infrastructure/drawContext.js';
 
 export class Entity {
     constructor() {
-        this.x = 0;
-        this.y = 0;
-        this.scale = 1;
     }
+
+    get x() {return 0}
+    get y() {return 0}
+    get scale() {return 1}
 
     draw() {}
 

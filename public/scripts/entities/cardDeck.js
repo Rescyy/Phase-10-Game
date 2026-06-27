@@ -1,15 +1,18 @@
-import { CardDimensions } from "../consts/dimensions.js";
+import { CardDeckDimensions, CardDimensions } from "../consts/dimensions.js";
 import { DrawContext, withContext } from "../infrastructure/drawContext.js";
 import { GameContext } from "../infrastructure/gameContext.js";
+import { HoldContext } from "../infrastructure/holdContext.js";
 import { Card } from "./card.js";
 import { Entity } from "./entity.js";
 
 export class CardDeck extends Entity {
     constructor() {
         super();
-        this.scale = CardDimensions.scale;
-
     }
+
+    get x() {return CardDeckDimensions.x}
+    get y() {return CardDeckDimensions.y}
+    get scale() {return CardDimensions.scale}
 
     draw() {
         withContext(() => {
@@ -35,6 +38,6 @@ export class CardDeck extends Entity {
         const result = GameContext.gameService.takeDeckCard();
         const card = new Card(result);
         card.isNew = true;
-        card.handleMouseDown(e);
+        HoldContext.startHolding(e, card);
     }
 }
