@@ -13,7 +13,7 @@ function setCanvasDimensions() {
     console.log(GameCanvas.scale());
     console.log(innerHeight);
     console.log(innerWidth);
-    GameCanvas.setAttribute('width', innerWidth);
+    GameCanvas.setAttribute('width', innerWidth - 400);
     GameCanvas.setAttribute('height', innerHeight);
 };
 

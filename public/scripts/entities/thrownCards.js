@@ -22,7 +22,7 @@ export class ThrownCards extends Entity {
 
     drawPath() {
         DrawContext.beginPath();
-        DrawContext.rect(-ThrownCardDimensions.width / 2, -ThrownCardDimensions.height / 2, ThrownCardDimensions.width, ThrownCardDimensions.height);
+        DrawContext.rect(-ThrownCardDimensions.size / 2, -ThrownCardDimensions.size / 2, ThrownCardDimensions.size, ThrownCardDimensions.size);
     }
 
     draw() {

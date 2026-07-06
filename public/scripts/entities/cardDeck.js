@@ -12,7 +12,7 @@ export class CardDeck extends Entity {
 
     get x() {return CardDeckDimensions.x}
     get y() {return CardDeckDimensions.y}
-    get scale() {return CardDimensions.scale}
+    get scale() {return CardDeckDimensions.scale * CardDimensions.scale}
 
     draw() {
         withContext(() => {

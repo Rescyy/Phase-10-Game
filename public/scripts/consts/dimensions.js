@@ -1,4 +1,4 @@
-import { lerp } from "../helpers/mathHelpers.js";
+import { lerp, lerpClamp } from "../helpers/mathHelpers.js";
 import { GameCanvas } from "../infrastructure/gameCanvas.js";
 
 export class CardDimensions {
@@ -11,7 +11,7 @@ export class CardDimensions {
     static incline = -0.1;
     static margin = 11;
     static get scale() {
-        return CardHandDimensions.width / 750 / 2;
+        return CardHandDimensions.maxWidth / 750 / 2 * 0.8;
     }
     static rainbowGap = 10;
     static starOffsetY = 10;
@@ -37,30 +37,31 @@ export class CardHandDimensions {
         return this.arcRadians * this.radius;
     }
     static get minArcGap() { return 100 * this.scale; }
-    static get scale() { return Math.max(Math.sqrt(this.height / this.width / 2), 1) };
+    static get scale() { return 1 };
     static get x() { return GameCanvas.width / 2 };
     static get y() {
-        return GameCanvas.height * Math.max(0.77, lerp(1, 0.77, this.width / 650 / devicePixelRatio))
+        return GameCanvas.height * Math.max(0.79, lerp(1, 0.79, this.width / 650 / devicePixelRatio))
     };
+    static maxWidth = 750;
     static get width() {
-        return Math.min(GameCanvas.width * 0.8, 750);
+        return Math.min(GameCanvas.width * 0.8, this.maxWidth);
     }
     static get height() {
-        return Math.min(this.width / 8, this.width * this.width / 750 / 750 * 50);
+        return Math.min(this.width / 8, this.width * this.width / this.maxWidth / this.maxWidth * 50);
     }
 };
 
 export class ThrownCardDimensions {
-    static get height() { return Math.max(CardHandDimensions.width / 2); }
-    static get width() { return Math.max(CardHandDimensions.width / 2); }
+    static get size() { return Math.max(CardHandDimensions.width * 0.4); }
     static get x() { return GameCanvas.width / 2 };
-    static get y() { return GameCanvas.height * 0.4 };
-    static get scale() { return GameCanvas.scale() };
+    static get y() { return GameCanvas.height * Math.max(0.4, lerpClamp(0.7, 0.4, CardHandDimensions.width / 650 / devicePixelRatio)) };
+    static get scale() { return 1 };
     static maxPickupRatio = 0.65;
 };
 
 export class CardDeckDimensions {
     static get x() { return 0.9 * GameCanvas.width };
-    static get y() { return 4 * GameCanvas.height / 5 };
+    static get y() { return GameCanvas.height * Math.max(0.6, lerpClamp(0.9, 0.6, CardHandDimensions.width / 650 / devicePixelRatio)) };
+    static get scale() {return 1}
 };
 

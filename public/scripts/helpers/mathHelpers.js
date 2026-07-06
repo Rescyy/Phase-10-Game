@@ -6,6 +6,12 @@ export function lerp(start, end, amt) {
     return (1 - amt) * start + amt * end;
 }
 
+export function lerpClamp(start, end, amt) {
+    if (amt < 0) amt = 0;
+    else if (amt > 1) amt = 1;
+    return lerp(start, end, amt);
+}
+
 export function animationLerpTransform(args) {
     const {
         startX, startY, endX, endY, startRot, endRot, amt,
