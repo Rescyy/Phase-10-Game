@@ -6,6 +6,7 @@ import { saveContext, DrawContext, restoreContext, withContext } from "../infras
 import { GameContext } from "../infrastructure/gameContext.js";
 import { HoldContext } from "../infrastructure/holdContext.js";
 import { Entity } from "./entity.js";
+import { SelectContext } from "./selectContext.js";
 
 
 export class Card extends Entity {
@@ -13,6 +14,7 @@ export class Card extends Entity {
         super();
         this.info = cardInfo;
         this.isNew = false;
+        this.selectContext = new SelectContext();
     }
 
     get scale() { return CardDimensions.scale }
@@ -61,7 +63,12 @@ export class Card extends Entity {
     }
 
     handleMouseDown(e) {
-        HoldContext.startHolding(e, this);
+        const gameService = GameContext.gameService;
+        if (gameService.selectingPhase) {
+            this.selectContext.toggle();
+        } else {
+            HoldContext.startHolding(e, this);
+        }
     }
 
     handleMouseUp(e) {
@@ -84,7 +91,7 @@ export class Card extends Entity {
     
                 cardHand.forEachEntity((card, i) => {
                     if (card.isPointIn(x, y)) {
-                        if (i <= cardIndex || this.isNew) {
+                        if (i < cardIndex || this.isNew) {
                             index = i + 1;
                         } else {
                             index = i;

@@ -1,4 +1,5 @@
 import { ThrownCardDimensions } from "../consts/dimensions.js";
+import { GameStep } from "../consts/gameStep.js";
 import { drawTextInCenter } from "../helpers/drawHelpers.js";
 import { DrawContext, restoreAllContext, withContext } from "./drawContext.js";
 import { ErrorContext } from "./errorContext.js";
@@ -19,6 +20,7 @@ export function draw() {
     const {
         entities
     } = GameContext;
+    GameContext.step = GameStep.DRAW;
     DrawContext.fillStyle = '#eeeeee';
     DrawContext.fillRect(0, 0, GameCanvas.width, GameCanvas.height);
     DrawContext.fillStyle = '#bbbbbb';
@@ -28,6 +30,7 @@ export function draw() {
     HoldContext.draw();
     DrawContext.drawZ.filter(x => x.z > 100).sort((a, b) => a.z - b.z).forEach(x => x.func());
     DrawContext.drawZ = [];
+    GameContext.step = GameStep.DRAW;
 }
 
 export function gameLoop(currentTime) {

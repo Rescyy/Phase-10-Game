@@ -7,7 +7,7 @@ body {
     font-family:system-ui,sans-serif;
 }
 
-#sidebar{
+#sidebar {
     background:#3d3d3d;
     color:white;
 
@@ -15,42 +15,41 @@ body {
     flex-direction:column;
     flex: 1;
 
-    padding:16px;
     box-sizing:border-box;
 }
 
-.panel{
+.panel {
     background:#4b4b4b;
     border-radius:12px;
-    padding:12px;
     box-shadow:0 2px 8px rgba(0,0,0,.3);
     flex: 1;
     display: flex;
     flex-direction: column;
-    margin-bottom: 16px;
+    margin: 4px 4px 4px 4px;
 }
 
-.panel h2{
-    margin-top:0;
+.panel h2 {
+    padding: 12px 12px 0px 12px;
+    margin:0;
     font-size:18px;
 }
 
-.scrollable{
+.scrollable {
     max-height:300px;
     overflow-y:auto;
 }
 
-.columns{
+.columns {
     display: flex;
     justify-content: center;
     flex: 1;
 }
 
-.column{
+.column {
     flex: 1;
 }
 
-.player{
+.player {
     display:flex;
     justify-content:space-between;
 
@@ -61,13 +60,13 @@ body {
     background:#595959;
 }
 
-#controls{
+#controls {
     display:flex;
     flex-direction: row;
     gap:10px;
 }
 
-#controls button{
+#controls button {
     border:none;
     background:#2196f3;
     color:white;
@@ -79,13 +78,63 @@ body {
     transition:.2s;
 }
 
-#controls button:hover{
+#controls button:hover {
     transform:translateY(-2px);
     background:#3ba3ff;
 }
 
-#controls button:active{
+#controls button:active {
     transform:translateY(1px);
+}
+
+#controls button[checked] {
+    background: #1e568b;
+}
+
+#controls button:hover[checked] {
+    background: #2472b6;
+}
+
+#stats ol {
+    transform: matrix(1, -0.05, 0, 1, 0, -5);
+}
+
+#stats li {
+    margin-bottom: 4px;
+    font-weight: bold;
+}
+
+#stats li.current::marker {
+    color: #ff1a1a;
+}
+
+#stats span {
+    margin-right: -2px;
+    padding-bottom: 2.5px;
+    border-radius: 4px;
+    display: inline-flex;
+
+    width: 13px;
+    height: 24px;
+
+    justify-content: center;
+    align-items: center;
+
+    font-weight: bold;
+    box-sizing: border-box;
+}
+
+#stats .card {
+    background-color: white;
+    color: #141414;
+}
+
+#stats .card-color {
+    background-color: rgba(139, 77, 139, 1)
+}
+
+#controls {
+    margin: 12px;
 }
 
 #mobile-info-btn{

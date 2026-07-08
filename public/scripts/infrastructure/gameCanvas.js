@@ -1,7 +1,7 @@
 export const GameCanvas = document.getElementById('game-canvas');
 
 GameCanvas.area = () => {
-    return innerHeight * innerWidth;
+    return GameCanvas.getAttribute('width') * GameCanvas.getAttribute('height');
 };
 
 GameCanvas.scale = () => {
@@ -10,10 +10,7 @@ GameCanvas.scale = () => {
 };
 
 function setCanvasDimensions() {
-    console.log(GameCanvas.scale());
-    console.log(innerHeight);
-    console.log(innerWidth);
-    GameCanvas.setAttribute('width', innerWidth - 400);
+    GameCanvas.setAttribute('width', innerWidth - 200);
     GameCanvas.setAttribute('height', innerHeight);
 };
 

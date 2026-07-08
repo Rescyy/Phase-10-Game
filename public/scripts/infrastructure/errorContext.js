@@ -1,3 +1,4 @@
+import { ActionError } from "../domain/actionError.js";
 import { Time } from "./time.js";
 
 class _ErrorContext {
@@ -21,6 +22,12 @@ class _ErrorContext {
         }
 
         return null;
+    }
+}
+
+export function throwActionError(message) {
+    if (true) {
+        throw new ActionError(message);
     }
 }
 

@@ -2,7 +2,7 @@ import { drawDebug, drawZ } from '../helpers/drawHelpers.js';
 import { CardRemove, CardMove, CardAdd } from './cardHandAction.js';
 import { CardAnimations } from "../consts/animations.js";
 import { HoldingZ } from "../consts/consts.js";
-import { CardHandDimensions } from "../consts/dimensions.js";
+import { CardDimensions, CardHandDimensions } from "../consts/dimensions.js";
 import { lerp } from "../helpers/mathHelpers.js";
 import { saveContext, forEachContext, DrawContext, restoreContext, withContext, clearContextPreserveTranslation } from "../infrastructure/drawContext.js";
 import { GameContext } from "../infrastructure/gameContext.js";
@@ -47,14 +47,7 @@ export class CardHand extends Entity {
         return cardsRadians;
     }
 
-    forEachEntity(func, args) {
-        const {
-            excludeHolding, restPosition,
-        } = args;
-        let {
-            radius,
-        } = CardHandDimensions;
-
+    getCardsActionRadians(restPosition) {
         let cardsRadians = this.getCardsRadians(this.cards.length);
         if (!restPosition && this.action && !CardAnimations.animationFinished(this.action.timePassed)) {
             const amt = CardAnimations.getMovementAmt(Time.current - this.action.time);
@@ -86,9 +79,22 @@ export class CardHand extends Entity {
             cardsRadians = startRadians
                 .map((start, i) => lerp(start, cardsRadians[i], amt));
         }
+        return cardsRadians;
+    }
+
+    forEachEntity(func, args) {
+        const {
+            excludeHolding, restPosition,
+        } = args;
+        let {
+            radius,
+        } = CardHandDimensions;
+
+        const cardsRadians = this.getCardsActionRadians(restPosition);
 
         withContext(() => {
             this.contextPrepare();
+            let drawZJob = null;
             forEachContext(this.cards, (card, i) => {
                 const cardRotation = cardsRadians[i];
     
@@ -100,20 +106,38 @@ export class CardHand extends Entity {
                 DrawContext.translate(0, radius / this.scale);
                 DrawContext.rotate(cardRotation);
                 DrawContext.translate(0, -radius / this.scale);
+                
+                const selectContext = card.selectContext;
+                let selectOffset = 0;
+                if (!CardAnimations.animationFinished(selectContext.toggleTimePassed())) {
+                    const amt = CardAnimations.getMovementAmt(selectContext.toggleTimePassed());
+                    if (selectContext.isSelected) {
+                        selectOffset = lerp(0, CardDimensions.selectOffset, amt);
+                    } else {
+                        selectOffset = lerp(CardDimensions.selectOffset, 0, amt);
+                    }
+                } else if (selectContext.isSelected) {
+                    selectOffset = CardDimensions.selectOffset;
+                }
+                
+                DrawContext.translate(0, -selectOffset);
+                
                 if (this.isCardBackInHand(card)) {
                     func(card, i);
                 } else {
-                    drawZ(1, () => {
+                    drawZJob = drawZ(1, () => {
                         const amt = CardAnimations.getMovementAmt(HoldContext.letGoTimePassed(card));
                         const endTransform = DrawContext.getTransform();
                         const lerpX = lerp(HoldContext.lastHoldX, endTransform.e, amt);
                         const lerpY = lerp(HoldContext.lastHoldY, endTransform.f, amt);
                         const lerpRotation = lerp(0, cardRotation, amt);
                         DrawContext.setTransform(this.scale, 0, 0, this.scale, lerpX, lerpY);
+                        DrawContext.rotate(lerpRotation);
                         func(card, i);
                     });
                 }
             });
+            drawZJob?.func();
         });
     }
 
@@ -143,7 +167,7 @@ export class CardHand extends Entity {
             if (card.isPointIn(x, y)) {
                 finalEntity = card;
             }
-        }, { excludeHolding: true });
+        }, { excludeHolding: false });
         return finalEntity;
     }
 

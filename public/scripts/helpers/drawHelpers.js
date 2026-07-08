@@ -1,4 +1,6 @@
+import { GameStep } from "../consts/gameStep.js";
 import { DrawContext, saveContext, restoreContext, withContext } from "../infrastructure/drawContext.js";
+import { GameContext } from "../infrastructure/gameContext.js";
 
 // set font ahead of time
 export function drawTextInCenter(txt, x, y, width, height, args) {
@@ -30,13 +32,24 @@ export function drawTextInCenter(txt, x, y, width, height, args) {
 
 export function drawZ(z, func) {
     const transform = DrawContext.getTransform();
-    DrawContext.drawZ.push({
+
+    const drawZJob = {
         z,
-        func: () => withContext(() => {
-            DrawContext.setTransform(transform);
-            func();
-        }),
-    });
+        executed: false,
+        func: () => {
+            if (!drawZJob.executed) {
+                withContext(() => {
+                    DrawContext.setTransform(transform);
+                    func();
+                });
+                drawZJob.executed = true;
+            }
+        },
+    };
+
+    DrawContext.drawZ.push(drawZJob);
+
+    return drawZJob;
 }
 
 export function drawDebug(func) {

@@ -18,6 +18,8 @@ export const GameContext = {
 
     gameService: null,
 
+    step: null,
+
     getEntityAt(x, y) {
         let entity = null;
         this.forEachEntity(e => {

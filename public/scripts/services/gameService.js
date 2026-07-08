@@ -3,27 +3,34 @@ import { ActionError } from "../domain/actionError.js";
 import { ActionResult } from "../domain/actionResult.js";
 import { BlockCard, NumberCard, WildCard } from "../domain/cardInfo.js";
 import { shuffleArray } from "../helpers/mathHelpers.js";
+import { throwActionError } from "../infrastructure/errorContext.js";
+import { PhaseService } from "./phaseService.js";
 
 export class GameService {
     constructor() {
         this.deck = [];
         this.cardHand = [];
         this.thrownCards = [];
-        this.newTurn();
+        this.currentPhase = 0;
+        this.cardTaken = false;
+        this.cardThrown = false;
+        this.selectingPhase = false;
+        this.phaseService = new PhaseService();
     }
 
     newTurn() {
         this.cardTaken = false;
         this.cardThrown = false;
+        this.selectingPhase = false;
     }
 
     canTakeDeckCard() {
         if (!this.isCurrentPlayerTurn()) {
-            this.throwActionError("Cannot take card, it's not your turn");
+            throwActionError("Cannot take card, it's not your turn");
         }
 
         if (this.cardTaken) {
-            this.throwActionError("Cannot take another card");
+            throwActionError("Cannot take another card");
         }
     }
 
@@ -38,7 +45,7 @@ export class GameService {
     canTakeThrownCard() {
         this.canTakeDeckCard();
         if (this.thrownCards.length === 0) {
-            this.throwActionError("There are no thrown cards to take");
+            throwActionError("There are no thrown cards to take");
         }
     }
 
@@ -52,15 +59,15 @@ export class GameService {
 
     canThrowCard(card) {
         if (!this.isCurrentPlayerTurn()) {
-            this.throwActionError("Cannot throw card, it's not your turn");
+            throwActionError("Cannot throw card, it's not your turn");
         }
 
         if (!this.cardHand.some(x => x === card)) {
-            this.throwActionError("Cannot throw a card that is not in your hand")
+            throwActionError("Cannot throw a card that is not in your hand")
         }
         
         if (!this.cardTaken) {
-            this.throwActionError("Cannot throw card, you should take one first");
+            throwActionError("Cannot throw card, you should take one first");
         }
     }
 
@@ -74,15 +81,15 @@ export class GameService {
 
     canEndTurn() {
         if (!this.isCurrentPlayerTurn()) {
-            this.throwActionError("Cannot end turn, it's not your turn");
+            throwActionError("Cannot end turn, it's not your turn");
         }
 
         if (!this.cardTaken) {
-            this.throwActionError("Cannot end turn, you must take a card first");
+            throwActionError("Cannot end turn, you must take a card first");
         }
 
         if (!this.cardThrown) {
-            this.throwActionError("Cannot end turn, you must throw away a card");
+            throwActionError("Cannot end turn, you must throw away a card");
         }
     }
 
@@ -110,6 +117,8 @@ export class GameService {
     initialiseGame() {
         this.initialiseDeck();
         this.setFirstCard();
+        this.currentPhase = 0;
+        this.phaseService.setPhase(this.currentPhase);
     }
 
     generateDeck() {
@@ -142,9 +151,11 @@ export class GameService {
         return this.cardHand;
     }
 
-    throwActionError(message) {
-        if (true) {
-            throw new ActionError(message);
+    toggleSelectPhase() {
+        if (!this.cardTaken) {
+            throwActionError("Cannot select phase, you must take a card first");
         }
+        this.selectingPhase = !this.selectingPhase;
+        return this.selectingPhase;
     }
 }

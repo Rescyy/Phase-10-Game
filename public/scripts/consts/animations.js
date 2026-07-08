@@ -1,6 +1,6 @@
 export class CardAnimations {
     static movement = {
-        time: 200,
+        time: 300,
         easeOut: easeOutCubic,
     };
 

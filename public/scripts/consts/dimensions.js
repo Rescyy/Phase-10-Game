@@ -22,6 +22,9 @@ export class CardDimensions {
     static blockCircleWidth = 52;
     static blockLineWidth = 45;
     static blockMargin = 14;
+    static get selectOffset() {
+        return this.height / 3 * this.scale;
+    }
 };
 
 export class CardHandDimensions {
