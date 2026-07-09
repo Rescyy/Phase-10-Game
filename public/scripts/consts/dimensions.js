@@ -25,6 +25,33 @@ export class CardDimensions {
     static get selectOffset() {
         return this.height / 3 * this.scale;
     }
+
+    static numberCard = {
+        leftCornerX: 45,
+        leftCornerY: 42,
+        leftCornerScale: 0.3,
+        rightCornerX: 38,
+        rightCornerY: 36,
+        rightCornerScale: 0.22,
+    };
+
+    static starCard = {
+        leftCornerX: 42,
+        leftCornerY: 38,
+        leftCornerScale: 0.23,
+        rightCornerX: 38,
+        rightCornerY: 42,
+        rightCornerScale: 0.18,
+    };
+
+    static blockCard = {
+        leftCornerX: 42,
+        leftCornerY: 36,
+        leftCornerScale: 0.28,
+        rightCornerX: 38,
+        rightCornerY: 42,
+        rightCornerScale: 0.2,
+    };
 };
 
 export class CardHandDimensions {

@@ -196,30 +196,75 @@ function drawCardRainbow(insideHeight) {
     }
 }
 
+function drawCorners(drawSymbol, cornerDimensions) {
+    const {
+        numberCard,
+        width, height
+    } = CardDimensions;
+    const {
+        leftCornerScale, leftCornerX, leftCornerY,
+        rightCornerScale, rightCornerX, rightCornerY,
+    } = cornerDimensions;
+    const drawTopCorners = () =>
+    withContext(() => {
+        DrawContext.translate(-width / 2, -height / 2);
+        withContext(() => {
+            DrawContext.translate(leftCornerX, leftCornerY);
+            DrawContext.scale(leftCornerScale, leftCornerScale);
+            drawSymbol();
+        });
+        withContext(() => {
+            DrawContext.translate(width - rightCornerX, rightCornerY);
+            DrawContext.scale(rightCornerScale, rightCornerScale);
+            drawSymbol();
+        });
+    });
+    withContext(() => {
+        drawTopCorners();
+        DrawContext.rotate(Math.PI);
+        drawTopCorners();
+    });
+}
+
 function drawNumberCard(number, color) {
     const {
-        width, height, accent, margin, fontSize
+        width, height, accent, margin, fontSize, incline, numberCard
     } = CardDimensions;
-    const insideHeight = drawCardBackground(color);
-    DrawContext.fillStyle = color;
+    
     DrawContext.font = `${fontSize}px Georgia`;
-    drawTextInCenter(number.toString(), 0, 0, width, insideHeight);
+    withContext(() => {
+        const insideHeight = drawCardBackground(color);
+        DrawContext.fillStyle = color;
+        drawTextInCenter(number.toString(), 0, 0, width, insideHeight);
+    });
+    
+    DrawContext.fillStyle = 'white';
+    drawCorners(() => {
+        drawTextInCenter(number.toString(), 0, 0, 0, 0, {incline});
+    }, numberCard);
 }
 
 function drawWildCard() {
     const {
         width, height, radius, margin, incline, fontSize, accent, accentRadius,
-        starOuterRadius, starInnerRadius, starForegroundRatio, starOffsetY
+        starOuterRadius, starInnerRadius, starForegroundRatio, starOffsetY,
+        starCard,
     } = CardDimensions;
-    const insideHeight = drawCardBackground('black');
-    drawCardRainbow(insideHeight);
-    const starY = insideHeight / 2 + starOffsetY;
-    const starX = width / 2;
-    drawStar(starX, starY, starOuterRadius, starInnerRadius, 'white');
-    drawStar(starX, starY, 
-        starOuterRadius * starForegroundRatio, 
-        starInnerRadius * starForegroundRatio, 
-        'black');
+    withContext(() => {
+        const insideHeight = drawCardBackground('black');
+        drawCardRainbow(insideHeight);
+        const starY = insideHeight / 2 + starOffsetY;
+        const starX = width / 2;
+        drawStar(starX, starY, starOuterRadius, starInnerRadius, 'white');
+        drawStar(starX, starY, 
+            starOuterRadius * starForegroundRatio, 
+            starInnerRadius * starForegroundRatio, 
+            'black');
+    });
+    DrawContext.transform(1, incline, 0, 1, 0, 0);
+    drawCorners(() => {
+        drawStar(0, 0, starOuterRadius, starInnerRadius, 'white');
+    }, starCard);
 }
 
 function drawStar(x, y, outerRadius, innerRadius, color) {
@@ -242,17 +287,22 @@ function drawStar(x, y, outerRadius, innerRadius, color) {
 function drawBlockCard() {
     const {
         width, height, radius, margin, incline, fontSize, accent, accentRadius,
-        blockCircleWidth, blockLineWidth, blockMargin
+        blockCircleWidth, blockLineWidth, blockMargin, blockCard
     } = CardDimensions;
-    const insideHeight = drawCardBackground('black');
-    drawCardRainbow(insideHeight);
     withContext(() => {
+        const insideHeight = drawCardBackground('black');
+        drawCardRainbow(insideHeight);
         DrawContext.translate(width / 2, insideHeight / 2);
         drawBlockCircle('white', blockCircleWidth);
         drawBlockLine('white', blockLineWidth);
         drawBlockCircle('black', blockCircleWidth - blockMargin);
         drawBlockLine('black', blockLineWidth - blockMargin);
     });
+    DrawContext.transform(1, incline, 0, 1, 0, 0);
+    drawCorners(() => {
+        drawBlockCircle('white', blockCircleWidth - blockMargin);
+        drawBlockLine('white', blockLineWidth - blockMargin);
+    }, blockCard);
 }
 
 function drawBlockCircle(color, lineWidth) {
