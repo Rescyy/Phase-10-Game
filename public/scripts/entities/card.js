@@ -3,6 +3,7 @@ import { CardDimensions, CardHandDimensions } from "../consts/dimensions.js";
 import { CardType } from "../domain/cardInfo.js";
 import { drawDebug, drawTextInCenter } from "../helpers/drawHelpers.js";
 import { saveContext, DrawContext, restoreContext, withContext } from "../infrastructure/drawContext.js";
+import { throwActionError } from "../infrastructure/errorContext.js";
 import { GameContext } from "../infrastructure/gameContext.js";
 import { HoldContext } from "../infrastructure/holdContext.js";
 import { Entity } from "./entity.js";
@@ -17,7 +18,14 @@ export class Card extends Entity {
         this.selectContext = new SelectContext();
     }
 
+    static Prototype = new Card(null);
+
     get scale() { return CardDimensions.scale }
+
+    static drawStatic(cardInfo) {
+        this.Prototype.info = cardInfo;
+        this.Prototype.draw();
+    }
 
     draw() {
         withContext(() => {
@@ -65,6 +73,9 @@ export class Card extends Entity {
     handleMouseDown(e) {
         const gameService = GameContext.gameService;
         if (gameService.selectingPhase) {
+            if (this.info.type === CardType.BLOCK) {
+                throwActionError("Cannot use block card for a phase");
+            }
             this.selectContext.toggle();
         } else {
             HoldContext.startHolding(e, this);

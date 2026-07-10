@@ -3,7 +3,7 @@ import { CardRemove, CardMove, CardAdd } from './cardHandAction.js';
 import { CardAnimations } from "../consts/animations.js";
 import { HoldingZ } from "../consts/consts.js";
 import { CardDimensions, CardHandDimensions } from "../consts/dimensions.js";
-import { lerp } from "../helpers/mathHelpers.js";
+import { discreteGradient, lerp } from "../helpers/mathHelpers.js";
 import { saveContext, forEachContext, DrawContext, restoreContext, withContext, clearContextPreserveTranslation } from "../infrastructure/drawContext.js";
 import { GameContext } from "../infrastructure/gameContext.js";
 import { Time } from "../infrastructure/time.js";
@@ -32,19 +32,9 @@ export class CardHand extends Entity {
         if (numCards === 0) {
             return [];
         }
-        if (numCards === 1) {
-            return [0];
-        }
         arcLength = Math.min(minArcGap * (numCards - 1), arcLength);
         const radians = arcLength / radius;
-        const gapRadians = radians / (numCards - 1);
-        const leftRadians = -radians / 2;
-        const cardsRadians = [];
-        for (let i = 0; i < numCards; i++) {
-            const cardRotation = leftRadians + i * gapRadians;
-            cardsRadians.push(cardRotation);
-        }
-        return cardsRadians;
+        return discreteGradient(-radians / 2, radians / 2, numCards);
     }
 
     getCardsActionRadians(restPosition) {

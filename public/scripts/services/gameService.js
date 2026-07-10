@@ -102,9 +102,9 @@ export class GameService {
         return true;
     }
 
-    initialiseDeck() {
+    initialiseDeck(seed) {
         this.generateDeck();
-        this.shuffleDeck();
+        this.shuffleDeck(seed);
     }
 
     setFirstCard() {
@@ -114,11 +114,10 @@ export class GameService {
         }
     }
 
-    initialiseGame() {
-        this.initialiseDeck();
+    initialiseGame(seed) {
+        this.initialiseDeck(seed);
         this.setFirstCard();
-        this.currentPhase = 0;
-        this.phaseService.setPhase(this.currentPhase);
+        this.phaseService.initialiseGame();
     }
 
     generateDeck() {
@@ -137,8 +136,8 @@ export class GameService {
         this.deck = [...numbered, ...wildCards, ...blockCards];
     }
 
-    shuffleDeck() {
-        this.deck = shuffleArray(this.deck);
+    shuffleDeck(seed) {
+        this.deck = shuffleArray(this.deck, seed);
     }
 
     takeHand() {

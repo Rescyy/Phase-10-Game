@@ -30,17 +30,27 @@ export function animationLerpTransform(args) {
     return transform;
 }
 
-export function shuffleArray(array) {
+export function shuffleArray(array, seed) {
     // Create a copy to avoid mutating the original array
     const shuffled = [...array]; 
-    
+    const arng = new alea(seed);
+
     for (let i = shuffled.length - 1; i > 0; i--) {
         // Generate a random index from 0 to i
-        const j = Math.floor(Math.random() * (i + 1));
-        
+        const random = Math.abs(arng.int32());
+        const j = random % (i + 1);
+
         // Swap elements using destructuring assignment
         [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
     
     return shuffled;
+}
+
+export function discreteGradient(start, end, n) {
+    if (n === 1) {
+        return [(end - start) / 2];
+    }
+    const gap = (end - start) / (n - 1);
+    return Array.from({length: n}, (v, i) => start + gap * i);
 }

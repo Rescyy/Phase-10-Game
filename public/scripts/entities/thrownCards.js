@@ -2,7 +2,7 @@ import { drawZ } from '../helpers/drawHelpers.js';
 import { ThrownCard } from './thrownCard.js';
 import { CardAnimations } from "../consts/animations.js";
 import { HoldingZ } from "../consts/consts.js";
-import { ThrownCardDimensions } from "../consts/dimensions.js";
+import { ThrownCardsDimensions } from "../consts/dimensions.js";
 import { normalizeRadians, animationLerpTransform } from "../helpers/mathHelpers.js";
 import { DrawContext, withContext, forEachContext, contextSetTransform } from "../infrastructure/drawContext.js";
 import { GameContext } from "../infrastructure/gameContext.js";
@@ -16,13 +16,13 @@ export class ThrownCards extends Entity {
         this.cards = [];
     }
 
-    get x() {return ThrownCardDimensions.x}
-    get y() {return ThrownCardDimensions.y}
-    get scale() {return ThrownCardDimensions.scale}
+    get x() {return ThrownCardsDimensions.x}
+    get y() {return ThrownCardsDimensions.y}
+    get scale() {return ThrownCardsDimensions.scale}
 
     drawPath() {
         DrawContext.beginPath();
-        DrawContext.rect(-ThrownCardDimensions.size / 2, -ThrownCardDimensions.size / 2, ThrownCardDimensions.size, ThrownCardDimensions.size);
+        DrawContext.rect(-ThrownCardsDimensions.size / 2, -ThrownCardsDimensions.size / 2, ThrownCardsDimensions.size, ThrownCardsDimensions.size);
     }
 
     draw() {

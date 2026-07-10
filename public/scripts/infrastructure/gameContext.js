@@ -1,10 +1,11 @@
 import { Card } from "../entities/card.js";
 import { CardHand } from "../entities/cardHand.js";
 import { ThrownCards } from "../entities/thrownCards.js";
-import { CardDeckDimensions, CardHandDimensions, ThrownCardDimensions } from "../consts/dimensions.js";
+import { CardDeckDimensions, CardHandDimensions, ThrownCardsDimensions } from "../consts/dimensions.js";
 import { CardDeck } from "../entities/cardDeck.js";
 import { GameService } from "../services/gameService.js";
 import { ThrownCard } from "../entities/thrownCard.js";
+import { PhaseCards } from "../entities/phaseCards.js";
 
 export const GameContext = {
     mouse: {
@@ -32,17 +33,20 @@ export const GameContext = {
     },
 
     setupGame() {
+        const seed = 'peach';
         this.gameService = new GameService();
-        this.gameService.initialiseGame();
+        this.gameService.initialiseGame(seed);
         const cards = this.gameService.takeHand().map(x => new Card(x));
         const cardHand = new CardHand(cards);
         const thrownCards = new ThrownCards();
         thrownCards.cards.push(new ThrownCard(new Card(this.gameService.thrownCards[0])))
         const cardDeck = new CardDeck();
+        const phaseCards = new PhaseCards();
         this.entities = {
             cardHand,
             thrownCards,
             cardDeck,
+            phaseCards,
         };
     },
 

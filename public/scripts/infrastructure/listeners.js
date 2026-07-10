@@ -2,7 +2,8 @@ import { GameStep } from '../consts/gameStep.js';
 import { ActionError } from '../domain/actionError.js';
 import { SelectContext } from '../entities/selectContext.js';
 import { GameService } from '../services/gameService.js';
-import { ErrorContext } from './errorContext.js';
+import { DomController } from './domController.js';
+import { ErrorContext, throwActionError } from './errorContext.js';
 import { GameCanvas } from './gameCanvas.js';
 import { GameContext } from "./gameContext.js";
 import { HoldContext } from './holdContext.js';
@@ -12,7 +13,8 @@ export function setupMouseListeners() {
     GameCanvas.addEventListener('mouseup', handleMouseUp);
     GameCanvas.addEventListener('click', handleClick);
     GameCanvas.addEventListener('mousemove', handleMouseMove);
-    document.getElementById("select-phase").onclick = handleSelectPhase;
+    DomController.getSelectPhaseButton().onclick = handleSelectPhase;
+    DomController.getPlacePhaseButton().onclick = handlePlacePhase;
 }
 
 function handleClick(e) {
@@ -44,15 +46,30 @@ function handleMouseMove(e) {
 }
 
 function handleSelectPhase() {
-    const self = this;
     handleAction(() => {
         const checked = GameContext.gameService.toggleSelectPhase();
-        if (checked) {
-            self.setAttribute('checked', '');
-        } else {
-            self.removeAttribute('checked');
+
+        DomController.checkSelectPhaseButton(checked);
+
+        if (!checked) {
             SelectContext.clearSelections();
         }
+    });
+}
+
+function handlePlacePhase() {
+    handleAction(() => {
+        const {
+            cardHand,
+            phaseCards,
+        } = GameContext.entities;
+        const selectedCards = cardHand.cards.filter(card => card.selectContext.isSelected).map(card => card.info);
+        const phaseGroups = GameContext.gameService.phaseService.groupCardsByPhase(selectedCards);
+        if (typeof phaseGroups === 'string') {
+            throwActionError(phaseGroups);
+        }
+        cardHand.cards = cardHand.cards.filter(card => !card.selectContext.isSelected);
+        phaseCards.placePhase(phaseGroups);
     });
 }
 

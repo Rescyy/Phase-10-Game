@@ -66,11 +66,11 @@ export class CardHandDimensions {
     static get arcLength() {
         return this.arcRadians * this.radius;
     }
-    static get minArcGap() { return 100 * this.scale; }
+    static get minArcGap() { return 80 * this.scale; }
     static get scale() { return 1 };
     static get x() { return GameCanvas.width / 2 };
     static get y() {
-        return GameCanvas.height * Math.max(0.79, lerp(1, 0.79, this.width / 650 / devicePixelRatio))
+        return GameCanvas.height * Math.max(0.82, lerp(1, 0.82, this.width / 650 / devicePixelRatio))
     };
     static maxWidth = 750;
     static get width() {
@@ -81,7 +81,7 @@ export class CardHandDimensions {
     }
 };
 
-export class ThrownCardDimensions {
+export class ThrownCardsDimensions {
     static get size() { return Math.max(CardHandDimensions.width * 0.4); }
     static get x() { return GameCanvas.width / 2 };
     static get y() { return GameCanvas.height * Math.max(0.4, lerpClamp(0.7, 0.4, CardHandDimensions.width / 650 / devicePixelRatio)) };
@@ -95,3 +95,11 @@ export class CardDeckDimensions {
     static get scale() {return 1}
 };
 
+export class PhaseCardsDimensions {
+    static get x() { return GameCanvas.width / 2 }
+    static get y() { return (CardHandDimensions.y + ThrownCardsDimensions.y + (ThrownCardsDimensions.size - CardDimensions.height * CardDimensions.scale) / 2) / 2 }
+    static get width() { return CardHandDimensions.width * 0.7 - CardDimensions.width * CardDimensions.scale }
+    static minCardGap = 100;
+    static get minGroupGap() { return CardDimensions.width * CardDimensions.scale + 10 } 
+    static groupGapWeight = 2;
+}

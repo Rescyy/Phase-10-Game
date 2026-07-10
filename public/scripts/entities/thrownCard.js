@@ -1,5 +1,5 @@
 import { easeOutCubic } from "../consts/animations.js";
-import { CardDimensions, ThrownCardDimensions } from "../consts/dimensions.js";
+import { CardDimensions, ThrownCardsDimensions } from "../consts/dimensions.js";
 import { lerp } from "../helpers/mathHelpers.js";
 import { DrawContext, withContext } from "../infrastructure/drawContext.js";
 import { GameContext } from "../infrastructure/gameContext.js";
@@ -98,7 +98,7 @@ export class ThrownCard extends Entity {
                     
                     const distanceToCard = distances.find(x => x.i === inBetweenIndex);
             
-                    const maxDist = ThrownCardDimensions.maxPickupRatio;
+                    const maxDist = ThrownCardsDimensions.maxPickupRatio;
             
                     if (distanceToCard) {
                         if (distanceToCard.value < maxDist * maxDist) {

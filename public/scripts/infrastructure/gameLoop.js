@@ -1,4 +1,4 @@
-import { ThrownCardDimensions } from "../consts/dimensions.js";
+import { ThrownCardsDimensions } from "../consts/dimensions.js";
 import { GameStep } from "../consts/gameStep.js";
 import { drawTextInCenter } from "../helpers/drawHelpers.js";
 import { DrawContext, restoreAllContext, withContext } from "./drawContext.js";

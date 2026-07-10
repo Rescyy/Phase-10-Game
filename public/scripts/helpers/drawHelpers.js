@@ -53,7 +53,7 @@ export function drawZ(z, func) {
 }
 
 export function drawDebug(func) {
-    if (true) {
+    if (0) {
         drawZ(101, () => {
             withContext(() => {
                 DrawContext.fillStyle = DrawContext.strokeStyle = 'magenta';
