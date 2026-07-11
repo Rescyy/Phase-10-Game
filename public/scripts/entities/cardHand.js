@@ -4,7 +4,7 @@ import { CardAnimations } from "../consts/animations.js";
 import { HoldingZ } from "../consts/consts.js";
 import { CardDimensions, CardHandDimensions } from "../consts/dimensions.js";
 import { discreteGradient, lerp } from "../helpers/mathHelpers.js";
-import { saveContext, forEachContext, DrawContext, restoreContext, withContext, clearContextPreserveTranslation } from "../infrastructure/drawContext.js";
+import { saveContext, forEachContext, DrawContext, restoreContext, withContext, clearContextPreserveTranslation, getTranslation } from "../infrastructure/drawContext.js";
 import { GameContext } from "../infrastructure/gameContext.js";
 import { Time } from "../infrastructure/time.js";
 import { Entity } from "./entity.js";
@@ -74,8 +74,8 @@ export class CardHand extends Entity {
 
     forEachEntity(func, args) {
         const {
-            excludeHolding, restPosition,
-        } = args;
+            excludeHolding, restPosition
+        } = args ?? {};
         let {
             radius,
         } = CardHandDimensions;
@@ -113,7 +113,7 @@ export class CardHand extends Entity {
                 DrawContext.translate(0, -selectOffset);
                 
                 if (this.isCardBackInHand(card)) {
-                    func(card, i);
+                    func(card, i, {...getTranslation(), rotation: cardRotation});
                 } else {
                     drawZJob = drawZ(1, () => {
                         const amt = CardAnimations.getMovementAmt(HoldContext.letGoTimePassed(card));
@@ -123,7 +123,7 @@ export class CardHand extends Entity {
                         const lerpRotation = lerp(0, cardRotation, amt);
                         DrawContext.setTransform(this.scale, 0, 0, this.scale, lerpX, lerpY);
                         DrawContext.rotate(lerpRotation);
-                        func(card, i);
+                        func(card, i, {...getTranslation(), rotation: cardRotation});
                     });
                 }
             });
@@ -217,5 +217,13 @@ export class CardHand extends Entity {
 
     getCardIndex(card) {
         return this.cards.indexOf(card);
+    }
+
+    getCardEntitiesPositions() {
+        const cardPositions = [];
+        this.forEachEntity((card, i, positions) => {
+            cardPositions.push({card, ...positions});
+        });
+        return cardPositions;
     }
 }

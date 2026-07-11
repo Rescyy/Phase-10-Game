@@ -36,7 +36,7 @@ export function drawZ(z, func) {
     const drawZJob = {
         z,
         executed: false,
-        func: () => {
+        func: z => {
             if (!drawZJob.executed) {
                 withContext(() => {
                     DrawContext.setTransform(transform);
@@ -47,7 +47,11 @@ export function drawZ(z, func) {
         },
     };
 
-    DrawContext.drawZ.push(drawZJob);
+    if (GameContext.step === GameStep.HANDLER) {
+        drawZJob.func();
+    } else {
+        DrawContext.drawZ.push(drawZJob);
+    }
 
     return drawZJob;
 }

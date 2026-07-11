@@ -7,6 +7,7 @@ import { ErrorContext, throwActionError } from './errorContext.js';
 import { GameCanvas } from './gameCanvas.js';
 import { GameContext } from "./gameContext.js";
 import { HoldContext } from './holdContext.js';
+import { ActionController } from './actionController.js';
 
 export function setupMouseListeners() {
     GameCanvas.addEventListener('mousedown', handleMouseDown);
@@ -58,19 +59,7 @@ function handleSelectPhase() {
 }
 
 function handlePlacePhase() {
-    handleAction(() => {
-        const {
-            cardHand,
-            phaseCards,
-        } = GameContext.entities;
-        const selectedCards = cardHand.cards.filter(card => card.selectContext.isSelected).map(card => card.info);
-        const phaseGroups = GameContext.gameService.phaseService.groupCardsByPhase(selectedCards);
-        if (typeof phaseGroups === 'string') {
-            throwActionError(phaseGroups);
-        }
-        cardHand.cards = cardHand.cards.filter(card => !card.selectContext.isSelected);
-        phaseCards.placePhase(phaseGroups);
-    });
+    handleAction(ActionController.placePhase);
 }
 
 function handleAction(func) {

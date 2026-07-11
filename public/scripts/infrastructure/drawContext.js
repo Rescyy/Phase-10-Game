@@ -53,3 +53,11 @@ export function restoreAllContext() {
         DrawContext.restore();
     }
 }
+
+export function getTranslation() {
+    const transform = DrawContext.getTransform();
+    return {
+        x: transform.e,
+        y: transform.f,
+    };
+}
