@@ -1,5 +1,5 @@
 import { drawDebug, drawZ } from '../helpers/drawHelpers.js';
-import { CardRemove, CardMove, CardAdd } from './cardHandAction.js';
+import { CardRemove, CardMove, CardAdd, CardPlacePhase } from './cardHandAction.js';
 import { CardAnimations } from "../consts/animations.js";
 import { HoldingZ } from "../consts/consts.js";
 import { CardDimensions, CardHandDimensions } from "../consts/dimensions.js";
@@ -64,6 +64,10 @@ export class CardHand extends Entity {
                 case 'add':
                     startRadians = this.getCardsRadians(this.cards.length - 1);
                     startRadians.splice(this.action.index, 0, cardsRadians[this.action.index]);
+                    break;
+                case 'placePhase':
+                    startRadians = this.getCardsRadians(this.action.hadCards)
+                        .filter((_, i) => this.action.remainingIndices.includes(i));
                     break;
             }
             cardsRadians = startRadians
@@ -180,6 +184,14 @@ export class CardHand extends Entity {
         this.action = new CardAdd(position);
         this.cards.splice(position, 0, card);
         return card;
+    }
+
+    placePhase() { // removes the selected cards and performs animation action
+        const remainingIndices = this.cards
+            .map((card, i) => card.selectContext.isSelected ? -1 : i)
+            .filter(i => i !== -1);
+        this.action = new CardPlacePhase(remainingIndices, this.cards.length);
+        this.cards = this.cards.filter(card => !card.selectContext.isSelected);
     }
 
     getCardsCenterOfRotation() {

@@ -34,3 +34,12 @@ export class CardAdd extends CardHandAction {
         this.index = index;
     }
 }
+
+export class CardPlacePhase extends CardHandAction {
+    constructor(remainingIndices, hadCards) {
+        super();
+        this.type = 'placePhase';
+        this.remainingIndices = remainingIndices;
+        this.hadCards = hadCards;
+    }
+}

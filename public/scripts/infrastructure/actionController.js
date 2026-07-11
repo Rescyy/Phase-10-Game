@@ -14,7 +14,7 @@ export class ActionController {
         if (typeof phaseGroups === 'string') {
             throwActionError(phaseGroups);
         }
-        cardHand.cards = cardHand.cards.filter(card => !card.selectContext.isSelected);
+        cardHand.placePhase();
         const selectedPositions = phaseGroups.map(phaseGroup => 
             phaseGroup.cardInfos.map(info => {
                 const cardPositionIndex = selectedCards.findIndex(x => x.card.info === info);
