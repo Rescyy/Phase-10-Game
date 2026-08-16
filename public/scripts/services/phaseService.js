@@ -1,14 +1,13 @@
 import { CardType } from "../domain/cardInfo.js";
-import { ColorPhaseGroup } from "../domain/colorPhaseGroup.js";
+import { PhaseGroup } from "../domain/phaseGroup.js";
+import { PhaseGroupType } from "../domain/phaseGroupTypes.js";
 import { PhaseRequirement, PhaseRequirementType } from "../domain/phaseRequirement.js";
-import { RunPhaseGroup } from "../domain/runPhaseGroup.js";
-import { SetPhaseGroup } from "../domain/setPhaseGroup.js";
 import { throwActionError } from "../infrastructure/errorContext.js";
 
 export class PhaseService {
     constructor() {
         this.phases = 10;
-        this.current = 0;
+        this.current = 4;
     }
 
     initialiseGame() {
@@ -35,6 +34,7 @@ export class PhaseService {
         const notEnoughError = 'Not enough cards selected';
         const tooManyError = 'Too many cards selected';
         const invalidPhaseError = "Cards selected don't make your phase";
+        let groupIndex = 0;
 
         if (cards.some(card => card.type === CardType.BLOCK)) {
             throwActionError('Cannot make phase out of block cards');
@@ -89,7 +89,7 @@ export class PhaseService {
 
             const removedNumberCards = removeNCards(numberCardsUsed, x => x.type === CardType.NUMBER && x.number === cards[0].number);
             const removedWildCards = removeNCards(wildCardsUsed, x => x.type === CardType.WILD);
-            phaseGroups.push(new SetPhaseGroup([...removedNumberCards, ...removedWildCards]));
+            phaseGroups.push(new PhaseGroup([...removedNumberCards, ...removedWildCards], groupIndex++, PhaseGroupType.SET, cards[0].number));
         }
 
         if (runRequirements.length > 1) {
@@ -184,7 +184,7 @@ export class PhaseService {
                 runGroup.push(card);
             }
             
-            phaseGroups.push(new RunPhaseGroup(runGroup));
+            phaseGroups.push(new PhaseGroup(runGroup, groupIndex++, PhaseGroupType.RUN, runStart));
         }
 
         if (colorRequirements.length > 1) {
@@ -200,7 +200,7 @@ export class PhaseService {
             const numberCard = cards.find(x => x.type === CardType.NUMBER);
             const color = numberCard?.color;
             const sameColors = cards.every(x => x.type === CardType.WILD || x.color === color);
-            phaseGroups.push(new ColorPhaseGroup([...cards]));
+            phaseGroups.push(new PhaseGroup([...cards], groupIndex++, PhaseGroupType.COLOR, color));
             cards = [];
         }
 
@@ -209,6 +209,38 @@ export class PhaseService {
         }
 
         return phaseGroups;
+    }
+
+    // returns array of {start:bool,end:bool} of where it can add that card
+    addCardAllowedPositions(phaseGroups, cardInfo) {
+        if (cardInfo.type === CardType.BLOCK) {
+            return phaseGroups.map(() => {return {start: false, end: false}});
+        }
+        return phaseGroups.map(group => {
+            switch (group.type) {
+                case PhaseGroupType.SET:
+                    if (cardInfo.type === CardType.WILD || group.hint === cardInfo.number) {
+                        return {start: true, end: true};
+                    }
+                    return {start: false, end: false};
+                case PhaseGroupType.RUN:
+                    const bounds = {start: false, end: false};
+                    const runStart = group.hint;
+                    const runEnd = group.hint + group.cardInfos.length - 1;
+                    if (runStart > 1) {
+                        bounds.start = cardInfo.type === CardType.WILD || cardInfo.number === runStart - 1;
+                    }
+                    if (runEnd < 12) {
+                        bounds.end = cardInfo.type === CardType.WILD || cardInfo.number === runEnd + 1;
+                    }
+                    return bounds;
+                case PhaseGroupType.COLOR:
+                    if (cardInfo.type === CardType.WILD || group.hint === cardInfo.color) {
+                        return {start: true, end: true};
+                    }
+                    return {start: false, end: false};
+            }
+        });
     }
 
     static phaseRequirements = {

@@ -100,6 +100,6 @@ export class PhaseCardsDimensions {
     static get y() { return (CardHandDimensions.y + ThrownCardsDimensions.y + (ThrownCardsDimensions.size - CardDimensions.height * CardDimensions.scale) / 2) / 2 }
     static get width() { return CardHandDimensions.width * 0.7 - CardDimensions.width * CardDimensions.scale }
     static minCardGap = 100;
-    static get minGroupGap() { return CardDimensions.width * CardDimensions.scale + 10 } 
-    static groupGapWeight = 2;
+    static get minGroupGap() { return 2.2 * CardDimensions.width * CardDimensions.scale} 
+    static groupGapWeight = 1.5;
 }

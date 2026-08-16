@@ -2,6 +2,7 @@ import { CardColors } from "../consts/colors.js";
 import { ActionError } from "../domain/actionError.js";
 import { ActionResult } from "../domain/actionResult.js";
 import { BlockCard, NumberCard, WildCard } from "../domain/cardInfo.js";
+import { PhaseCardAddSide } from "../entities/phaseCardAddSide.js";
 import { shuffleArray } from "../helpers/mathHelpers.js";
 import { throwActionError } from "../infrastructure/errorContext.js";
 import { PhaseService } from "./phaseService.js";
@@ -16,6 +17,8 @@ export class GameService {
         this.cardThrown = false;
         this.selectingPhase = false;
         this.phaseService = new PhaseService();
+        this.phasePlaced = false;
+        this.phaseGroups = null;
     }
 
     newTurn() {
@@ -154,7 +157,42 @@ export class GameService {
         if (!this.cardTaken) {
             throwActionError("Cannot select phase, you must take a card first");
         }
+        if (this.phasePlaced) {
+            throwActionError("Cannot select phase, you already placed it");
+        }
         this.selectingPhase = !this.selectingPhase;
         return this.selectingPhase;
+    }
+
+    placePhase(cards) {
+        if (this.phasePlaced) {
+            throwActionError("Cannot place phase, you already placed it");
+        }
+        const phaseGroups = this.phaseService.groupCardsByPhase(cards);
+        if (typeof phaseGroups === 'string') {
+            throwActionError(phaseGroups);
+        }
+        this.phaseGroups = phaseGroups;
+        this.phasePlaced = true;
+        this.selectingPhase = false;
+
+        return phaseGroups;
+    }
+
+    addPhaseCard(card, groupIndex, side) {
+        const allowedPositions = this.phaseService.addCardAllowedPositions(this.phaseGroups, card);
+        if (!allowedPositions[groupIndex][side]) {
+            throwActionError(`Cannot add phase card ${card} to group ${groupIndex} on side ${side}`);
+        }
+
+        const phaseGroup = this.phaseGroups[groupIndex];
+
+        if (side === PhaseCardAddSide.START) {
+            phaseGroup.cardInfos.unshift(card);
+        } else if (side === PhaseCardAddSide.END) {
+            phaseGroup.cardInfos.push(card);
+        }
+
+        return this.phaseGroups;
     }
 }

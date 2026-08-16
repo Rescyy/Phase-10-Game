@@ -27,14 +27,28 @@ export class Card extends Entity {
         this.Prototype.draw();
     }
 
+    static drawDebug(x, y, args) {
+        const { width, height, radius } = CardDimensions;
+        let {
+            withCenter
+        } = args ?? {};
+        if (withCenter === undefined) {
+            withCenter = true;
+        }
+        if (withCenter) {
+            DrawContext.beginPath();
+            DrawContext.arc(0, 0, 10, 0, 2 * Math.PI);
+            DrawContext.fill();
+        }
+        DrawContext.beginPath();
+        DrawContext.roundRect(x - width / 2, y - height / 2, width, height, radius);
+        DrawContext.stroke();
+    }
+
     draw() {
         withContext(() => {
             this.contextPrepare();
-            drawDebug(() => {
-                DrawContext.beginPath();
-                DrawContext.arc(0, 0, 10, 0, 2 * Math.PI);
-                DrawContext.fill();
-            });
+            drawDebug(() => Card.drawDebug(0, 0));
             switch (this.info.type) {
                 case CardType.NUMBER:
                     drawNumberCard(this.info.number, this.info.color);
@@ -53,7 +67,7 @@ export class Card extends Entity {
 
     static drawBack() {
         withContext(() => {
-            drawCardOutline('black', 'black');
+            Card.drawOutline('black', 'black');
         });
     }
 
@@ -87,7 +101,7 @@ export class Card extends Entity {
         const y = e.offsetY;
 
         const {
-            cardHand, thrownCards,
+            cardHand, thrownCards, phaseCards,
         } = GameContext.entities;
 
         try {
@@ -95,6 +109,10 @@ export class Card extends Entity {
                 GameContext.gameService.throwCard(this.info);
                 cardHand.removeCard(this);
                 HoldContext.swapHolding(thrownCards.addCard(this));
+            } else if (phaseCards.isPointIn(x,y)) {
+                if (phaseCards.addPhaseCard(this.info, x, y)) {
+                    cardHand.removeCard(this);
+                }
             } else {
                 const distances = [];
                 const cardIndex = cardHand.getCardIndex(this);
@@ -161,27 +179,35 @@ export class Card extends Entity {
             HoldContext.stopHolding(e);
         }
     }
+    
+    static drawPath() {
+        const {
+            width, height, radius,
+        } = CardDimensions;
+        DrawContext.translate(-width / 2, -height / 2);
+        DrawContext.beginPath();
+        DrawContext.roundRect(0, 0, width, height, radius);
+    }
+
+    static drawOutline(fillStyle, strokeStyle, lineWidth) {
+        const {
+            width, height, radius,
+        } = CardDimensions;
+        Card.drawPath();
+        DrawContext.fillStyle = fillStyle;
+        DrawContext.lineWidth = lineWidth ?? 2;
+        DrawContext.strokeStyle = strokeStyle;
+        DrawContext.fill();
+        DrawContext.stroke();
 }
 
-function drawCardOutline(fillStyle, strokeStyle) {
-    const {
-        width, height, radius,
-    } = CardDimensions;
-    DrawContext.translate(-width / 2, -height / 2);
-    DrawContext.beginPath();
-    DrawContext.roundRect(0, 0, width, height, radius);
-    DrawContext.fillStyle = fillStyle;
-    DrawContext.lineWidth = 2;
-    DrawContext.strokeStyle = strokeStyle;
-    DrawContext.fill();
-    DrawContext.stroke();
 }
 
 function drawCardBackground(color) {
     const {
         width, height, radius, margin, incline, accent, accentRadius,
     } = CardDimensions;
-    drawCardOutline('white', 'gray');
+    Card.drawOutline('white', 'gray');
     DrawContext.beginPath();
     DrawContext.translate(margin, margin);
     DrawContext.scale(1 - 2 * margin / width, 1 - 2 * margin / height);

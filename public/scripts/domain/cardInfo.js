@@ -29,6 +29,10 @@ export class NumberCard extends CardInfo {
         this.number = number;
         this.color = color;
     }
+
+    toString() {
+        return `NumberCard ${number} ${color}`
+    }
 }
 
 export class BlockCard extends CardInfo {
@@ -36,11 +40,19 @@ export class BlockCard extends CardInfo {
         super();
         this.type = CardType.BLOCK;
     }
+
+    toString() {
+        return "BlockCard";
+    }
 }
 
 export class WildCard extends CardInfo {
     constructor() {
         super();
         this.type = CardType.WILD;
+    }
+
+    toString() {
+        return "WildCard";
     }
 }

@@ -1,13 +1,7 @@
 import { Time } from "../infrastructure/time.js";
+import { Action } from "./action.js";
 
-class CardHandAction {
-    constructor() {
-        this.time = Time.current;
-    }
-
-    get timePassed() {
-        return Time.current - this.time;
-    }
+class CardHandAction extends Action {
 }
 
 export class CardRemove extends CardHandAction {

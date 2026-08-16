@@ -1,4 +1,6 @@
-import { PhaseCardsTransition } from "../entities/phaseCardsTransition.js";
+import { PhaseCardsPlacePhase } from "../entities/phaseCardAction.js";
+import { SelectContext } from "../entities/selectContext.js";
+import { DomController } from "./domController.js";
 import { throwActionError } from "./errorContext.js";
 import { GameContext } from "./gameContext.js";
 
@@ -10,10 +12,7 @@ export class ActionController {
         } = GameContext.entities;
         const cardPositions = cardHand.getCardEntitiesPositions();
         const selectedCards = cardPositions.filter(x => x.card.selectContext.isSelected);
-        const phaseGroups = GameContext.gameService.phaseService.groupCardsByPhase(selectedCards.map(x => x.card.info));
-        if (typeof phaseGroups === 'string') {
-            throwActionError(phaseGroups);
-        }
+        const phaseGroups = GameContext.gameService.placePhase(selectedCards.map(x => x.card.info));
         cardHand.placePhase();
         const selectedPositions = phaseGroups.map(phaseGroup => 
             phaseGroup.cardInfos.map(info => {
@@ -27,6 +26,17 @@ export class ActionController {
                 };
             })
         );
-        phaseCards.placePhase(new PhaseCardsTransition(selectedPositions), phaseGroups);
+        phaseCards.placePhase(new PhaseCardsPlacePhase(selectedPositions), phaseGroups);
+        DomController.checkSelectPhaseButton(false);
+    }
+
+    static toggleSelectPhase() {
+        const checked = GameContext.gameService.toggleSelectPhase();
+
+        DomController.checkSelectPhaseButton(checked);
+
+        if (!checked) {
+            SelectContext.clearSelections();
+        }
     }
 }
