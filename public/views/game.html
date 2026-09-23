@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="../style/style.css">
+</head>
+<body>
+    <canvas id="game-canvas"></canvas>
+
+    <aside id="sidebar">
+        <section class="panel">
+            <h2>Leaderboard</h2>
+            <div id="leaderboard" class="scrollable"></div>
+        </section>
+
+        <section class="panel">
+            <h2>Phase</h2>
+            <div id="stats">
+                <ol id="phase-list">
+                    <li>
+                        <span class="card">A</span>
+                        <span class="card">A</span>
+                        <span class="card">A</span>
+                        <span>+</span>
+                        <span class="card">B</span>
+                        <span class="card">B</span>
+                        <span class="card">B</span>
+                    </li>
+                    <li>
+                        <span class="card">A</span>
+                        <span class="card">A</span>
+                        <span class="card">A</span>
+                        <span>+</span>
+                        <span class="card">A</span>
+                        <span class="card">B</span>
+                        <span class="card">C</span>
+                        <span class="card">D</span>
+                    </li>
+                    <li>
+                        <span class="card">A</span>
+                        <span class="card">A</span>
+                        <span class="card">A</span>
+                        <span class="card">A</span>
+                        <span>+</span>
+                        <span class="card">A</span>
+                        <span class="card">B</span>
+                        <span class="card">C</span>
+                        <span class="card">D</span>
+                    </li>
+                    <li>
+                        <span class="card">A</span>
+                        <span class="card">B</span>
+                        <span class="card">C</span>
+                        <span class="card">D</span>
+                        <span class="card">E</span>
+                        <span class="card">F</span>
+                        <span class="card">G</span>
+                    </li>
+                    <li>
+                        <span class="card">A</span>
+                        <span class="card">B</span>
+                        <span class="card">C</span>
+                        <span class="card">D</span>
+                        <span class="card">E</span>
+                        <span class="card">F</span>
+                        <span class="card">G</span>
+                        <span class="card">H</span>
+                    </li>
+                    <li>
+                        <span class="card">A</span>
+                        <span class="card">B</span>
+                        <span class="card">C</span>
+                        <span class="card">D</span>
+                        <span class="card">E</span>
+                        <span class="card">F</span>
+                        <span class="card">G</span>
+                        <span class="card">H</span>
+                        <span class="card">I</span>
+                    </li>
+                    <li>
+                        <span class="card">A</span>
+                        <span class="card">A</span>
+                        <span class="card">A</span>
+                        <span class="card">A</span>
+                        <span>+</span>
+                        <span class="card">B</span>
+                        <span class="card">B</span>
+                        <span class="card">B</span>
+                        <span class="card">B</span>
+                    </li>
+                    <li>
+                        <span class="card-color">&nbsp;</span>
+                        <span class="card-color">&nbsp;</span>
+                        <span class="card-color">&nbsp;</span>
+                        <span class="card-color">&nbsp;</span>
+                        <span class="card-color">&nbsp;</span>
+                        <span class="card-color">&nbsp;</span>
+                        <span class="card-color">&nbsp;</span>
+                    </li>
+                    <li>
+                        <span class="card">A</span>
+                        <span class="card">A</span>
+                        <span class="card">A</span>
+                        <span class="card">A</span>
+                        <span class="card">A</span>
+                        <span>+</span>
+                        <span class="card">B</span>
+                        <span class="card">B</span>
+                    </li>
+                    <li>
+                        <span class="card">A</span>
+                        <span class="card">A</span>
+                        <span class="card">A</span>
+                        <span class="card">A</span>
+                        <span class="card">A</span>
+                        <span>+</span>
+                        <span class="card">B</span>
+                        <span class="card">B</span>
+                        <span class="card">B</span>
+                    </li>
+                </ol>
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>Actions</h2>
+            <div id="controls" class="columns">
+                <div class="column">
+                    <button id="select-phase">Select Phase</button>
+                </div>
+                <div class="column">
+                    <button id="place-phase" disabled>Place Phase</button>
+                </div>
+            </div>
+        </section>
+    </aside>
+
+    <button id="mobile-info-btn">☰</button>
+
+    <div id="mobile-info">
+        <button id="close-info">✕</button>
+
+        <section class="panel">
+            <h2>Leaderboard</h2>
+            <div id="mobile-leaderboard"></div>
+        </section>
+
+        <section class="panel">
+            <h2>Game</h2>
+            <div id="mobile-stats"></div>
+        </section>
+    </div>
+
+    <script src="scripts/index.js" type="module"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/lib/alea.min.js"></script> 
+    <script>
+        const btn = document.getElementById("mobile-info-btn");
+        const panel = document.getElementById("mobile-info");
+        const close = document.getElementById("close-info");
+
+        btn.onclick = () => panel.classList.add("open");
+        close.onclick = () => panel.classList.remove("open");
+    </script>
+</body>
+</html>

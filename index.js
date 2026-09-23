@@ -1,10 +1,12 @@
-const express = require("express");
+import express from 'express';
+import { initialiseEndpoints } from "./backend/endpoints.js";
+import path from 'path';
+import { fileURLToPath } from 'url';
+
 const app = express();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+initialiseEndpoints(app, __dirname);
 
-app.use(express.static(__dirname + '/public'));
-
-app.get('/', (req,res) => {
-    res.sendFile(__dirname + "/public/views/index.html")
-});
 
 app.listen(12345);
