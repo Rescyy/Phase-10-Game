@@ -7,9 +7,14 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "debug": "node ./index.js"
+    "debug": "node ./index.js",
+    "bundle": "esbuild public/scripts/index.js --bundle --minify --platform=browser --outfile=public/dist/index.js",
+    "prod": "npm run bundle && npm run debug"
   },
   "dependencies": {
-    "express": "^5.2.1"
+    "cookie-parser": "^1.4.7",
+    "esbuild": "^0.25.0",
+    "express": "^5.2.1",
+    "express-validator": "^7.3.2"
   }
 }

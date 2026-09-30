@@ -1,0 +1,45 @@
+<h1>Create Room</h1>
+
+<form id="submit-room" action="/create-room">
+    <div class="field">
+        <label for="username">Username</label>
+        <input
+            type="text"
+            id="username"
+            name="username"
+            maxlength="{{usernameLength}}"
+        >
+    </div>
+
+    <div class="field">
+        <label for="roomcode">Room Code</label>
+        <input
+            type="text"
+            id="roomcode"
+            class="uppercase"
+            name="roomcode"
+            value="{{roomCode}}"
+            minlength="{{roomCodeLength}}"
+            maxlength="{{roomCodeLength}}"
+        >
+    </div>
+
+    <div class="field">
+        <label for="password">Password (optional)</label>
+        <input
+            type="password"
+            id="password"
+            name="password"
+            maxlength="{{passwordLength}}"
+        >
+    </div>
+
+    <div id="form-summary-error" role="alert">&nbsp;</div>
+
+    <button class="button" type="submit">
+        <div id="loading-spinner" class="loading-spinner hidden" aria-label="Loading" aria-busy="true"></div>
+        <span id="button-message">Create Room</span>
+    </button>
+
+</form>
+<script src="/scripts/formLogic.js"></script>

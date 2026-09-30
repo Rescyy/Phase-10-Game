@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <link rel="stylesheet" href="../style/style.css">
+    <link rel="stylesheet" href="../style/gamestyle.css">
+    <title>Game {{roomCode}}</title>
 </head>
 <body>
     <canvas id="game-canvas"></canvas>
@@ -150,15 +151,15 @@
         </section>
     </div>
 
-    <script src="scripts/index.js" type="module"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/lib/alea.min.js"></script> 
-    <script>
-        const btn = document.getElementById("mobile-info-btn");
-        const panel = document.getElementById("mobile-info");
-        const close = document.getElementById("close-info");
-
-        btn.onclick = () => panel.classList.add("open");
-        close.onclick = () => panel.classList.remove("open");
-    </script>
 </body>
+<script src="/dist/index.js" type="module"></script> 
+<script src="//cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/lib/alea.min.js"></script> 
+<script>
+    const btn = document.getElementById("mobile-info-btn");
+    const panel = document.getElementById("mobile-info");
+    const close = document.getElementById("close-info");
+
+    btn.onclick = () => panel.classList.add("open");
+    close.onclick = () => panel.classList.remove("open");
+</script>
 </html>
