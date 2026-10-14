@@ -42,6 +42,16 @@ export class RoomValidator {
 
                 return true;
             });
+        } else {
+            roomCodeRule = roomCodeRule.custom((roomCode) => {
+                const room = this.repository.getRoomByRoomCode(roomCode);
+
+                if (room !== null) {
+                    throw new Error('This room code is already used');
+                }
+
+                return true;
+            });
         }
 
         return [

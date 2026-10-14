@@ -12,6 +12,7 @@ export class RoomController extends BaseController {
     constructor(services) {
         super(services);
         this.roomValidator = services.roomValidator;
+        this.playerService = services.playerService;
     }
 
     registerEndpoints(app) {
@@ -37,7 +38,11 @@ export class RoomController extends BaseController {
 
     async getCreateRoom(req, res) {
         const createRoomViewPath = path.join(FileService.dirname, 'views', 'create-room.html');
-        const roomCode = randomRoomCode();
+        
+        let roomCode;
+        do {
+            roomCode = randomRoomCode();
+        } while (this.repository.getRoomByRoomCode(roomCode) !== null);
 
         const model = {
             usernameLength: USERNAME_LENGTH,
@@ -56,24 +61,33 @@ export class RoomController extends BaseController {
         }
 
         const body = req.body;
-        
+
         const room = new Room();
         room.roomCode = body.roomcode;
         room.password = body.password;
         this.repository.createRoom(room);
 
-        const player = new Player();
-        player.username = body.username;
-        player.room = room;
-        player.createdAt = room.createdAt;
-        player.populateIds();
-        this.repository.createPlayer(player);
+        let player = this.playerService.resolvePlayerFromCookie(req);
 
-        room.players.push(player);
+        if (player !== null) {
+            const previousRoom = player.room;
+            player.username = body.username;
 
-        PlayerService.setPlayerPrivateId(res, player.privateId);
+            if (previousRoom.players.length === 1) {
+                this.repository.deleteRoom(previousRoom);
+            }
+        } else {
+            player = new Player();
+            player.username = body.username;
+            player.createdAt = room.createdAt;
+            player.populateIds();
+            this.repository.createPlayer(player);
+            PlayerService.setPlayerPrivateId(res, player.privateId);
+        }
 
-        return await res.redirect(`/game/${room.roomCode}`);
+        room.addPlayer(player);
+        
+        return await this.gameRedirectResponse(res, room.roomCode);
     }
 
     async getJoinRoom(req, res) {
@@ -98,16 +112,33 @@ export class RoomController extends BaseController {
 
         const room = this.repository.getRoomByRoomCode(body.roomcode);
 
-        const player = new Player();
-        player.username = body.username;
-        player.room = room;
-        player.populateIds();
-        this.repository.createPlayer(player);
+        let player = this.playerService.resolvePlayerFromCookie(req);
 
-        room.players.push(player);
+        if (player !== null) {
+            const previousRoom = player.room;
+            player.username = body.username;
 
-        PlayerService.setPlayerPrivateId(res, player.privateId);
+            if (Object.is(previousRoom, room)) {
+                // Do nothing
+            } else if (previousRoom.players.length === 1) {
+                this.repository.deleteRoom(previousRoom);
+                room.addPlayer(player);
+            }
+        } else {
+            player = new Player();
+            player.username = body.username;
+            player.populateIds();
+            this.repository.createPlayer(player);
+            PlayerService.setPlayerPrivateId(res, player.privateId);
+            room.addPlayer(player);
+        }
 
-        return await res.redirect(`/game/${room.roomCode}`);
+        return await this.gameRedirectResponse(res, room.roomCode);
+    }
+
+    async gameRedirectResponse(res, roomCode) {
+        return await res.json({
+            redirectUrl: `/game/${roomCode}`,
+        });
     }
 }

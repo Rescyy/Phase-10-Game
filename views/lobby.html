@@ -1,0 +1,72 @@
+<div id="lobby" class="lobby">
+
+    <div class="lobby-header">
+        <h1>Room {{roomCode}}</h1>
+    </div>
+
+    <div class="lobby-content" data-self-ready={{selfReady}}>
+        
+        <!-- Left: Players -->
+        <section class="players-panel">
+
+            <button class="leave-button" onclick="window.location.href='/'">
+                Leave Room
+            </button>
+
+            <div class="players-box">
+                <div class="players-header">
+                    <span>Players</span>
+                </div>
+
+                <div id="players-list" class="players-list">
+
+                    {{playerRows}}
+
+                </div>
+            </div>
+
+            <button id="ready-button" class="ready-button">
+                <div id="loading-spinner" class="loading-spinner hidden" aria-label="Loading" aria-busy="true"></div>
+                <span id="ready-button-message"></span>
+            </button>
+
+        </section>
+
+        <!-- Middle: Chat -->
+        <!-- <section class="chat-panel">
+
+            <div class="chat-box">
+
+                <div class="chat-header">
+                    <span>Chat</span>
+                </div>
+
+                <div id="chat-messages" class="chat-messages">
+
+                    {{chatMessages}}
+
+                </div>
+
+                <form id="chat-form" class="chat-input-area">
+                    <input
+                        id="chat-input"
+                        type="text"
+                        placeholder="Type a message..."
+                        autocomplete="off"
+                        maxlength="500"
+                    >
+
+                    <button type="submit" class="send-button">
+                        Send
+                    </button>
+                </form>
+
+            </div>
+
+        </section> -->
+
+    </div>
+</div>
+<script src="/scripts/helper.js"></script>
+<script src="/scripts/websocket.js"></script>
+<script src="/scripts/lobby.js"></script>

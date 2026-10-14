@@ -23,9 +23,4 @@ export function initialiseEndpoints(app, controllers) {
     app.use(cookieParser());
 
     Object.values(controllers).forEach(controller => controller.registerEndpoints(app));
-
-    app.get('/game/:roomCode', async (req, res) => {
-        const gameViewPath = path.join(FileService.publicPath, 'views', 'game.html');
-        await res.sendFile(gameViewPath);
-    });
 }

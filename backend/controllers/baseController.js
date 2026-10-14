@@ -5,7 +5,7 @@ export class BaseController {
         this.repository = services.repository;
     }
 
-    registerEndpoints(app) {
+    registerEndpoints(app, wss) {
         throw new Error('abstract method');
     }
 

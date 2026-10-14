@@ -12,9 +12,12 @@
     "prod": "npm run bundle && npm run debug"
   },
   "dependencies": {
+    "cookie": "^2.0.1",
     "cookie-parser": "^1.4.7",
     "esbuild": "^0.25.0",
     "express": "^5.2.1",
-    "express-validator": "^7.3.2"
+    "express-validator": "^7.3.2",
+    "path-to-regexp": "^8.4.2",
+    "ws": "^8.22.0"
   }
 }

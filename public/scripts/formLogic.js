@@ -23,15 +23,12 @@ form.addEventListener('submit', async function(e) {
             hideElement(loadIndicator);
             showElement(buttonMessage);
         });
-        
-        if (response.redirected) {
-            window.location.href = response.url;
-            return;
-        }
 
         const result = await response.json();
 
-        if (!response.ok) {
+        if (response.ok) {
+            window.location.href = result.redirectUrl;
+        } else {
             if (result.errors) {
                 displayError(result.errors);
                 return;
@@ -66,12 +63,4 @@ function displayError(errors) {
             }
             return false;
         });
-}
-
-function showElement(element) {
-    element?.classList.remove('hidden');
-}
-
-function hideElement(element) {
-    element?.classList.add('hidden');
 }

@@ -9,6 +9,8 @@ export class Player extends Entity {
         this.publicId = null;
         this.privateId = null;
         this.username = null;
+        this.ready = false;
+        this.session = null;
     }
 
     populateIds() {

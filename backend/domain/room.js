@@ -11,6 +11,17 @@ export class Room extends Entity {
     constructor() {
         super();
         this.players = [];
+        this.roomCode = null;
+        this.chatMessages = [];
+    }
+
+    addPlayer(player) {
+        if (player instanceof Player) {
+            this.players.push(player);
+            player.room = this;
+            return;
+        }
+        throw new Error('player is not instance of Player');
     }
 }
 
