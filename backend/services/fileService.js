@@ -22,6 +22,9 @@ export class FileService {
     }
 
     static getViewPath(fileName) {
+        if (fileName.startsWith('public')) {
+            return fileName;
+        }
         return path.join(FileService.dirname, 'views', fileName);
     }
 

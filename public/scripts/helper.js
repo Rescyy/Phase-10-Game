@@ -17,3 +17,34 @@ function debounceAsync(func, delay) {
         }, delay);
     }
 }
+
+async function readResource(url) {
+    return await fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error status ${response.status}`);
+            }
+            return response.text();
+        })
+        .catch((error) => {
+            console.error("fetch error: ", error.message);
+        });
+} 
+
+function renderTemplate(template, model) {
+    return template.replace(
+            /\{\{\s*([\w.]+)\s*\}\}/g,
+            (_, key) => {
+                const value = key
+                    .split(".")
+                    .reduce((obj, part) => obj?.[part], model);
+
+                if (typeof value === 'boolean') {
+                    return value ? 'true' : 'false';
+                }
+                return value ?? "";
+            }
+        );
+}
+
+// function render

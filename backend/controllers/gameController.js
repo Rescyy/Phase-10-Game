@@ -1,8 +1,6 @@
 import { FileService } from "../services/fileService.js";
 import { BaseController } from "./baseController.js";
-import path from 'path';
 import { Renderer } from "../renderer.js";
-import { ChatMessage } from "../domain/chatMessage.js";
 
 export class GameController extends BaseController {
     constructor(services) {
@@ -21,33 +19,15 @@ export class GameController extends BaseController {
         const room = this.repository.getRoomByRoomCode(roomCode);
         const player = this.playerService.resolvePlayerFromCookie(req);
 
-        if (room === null || player === null) {
+        if (room === null || player === null || player.room !== room) {
             return res.redirect('/');
         }
 
-        const publicId = player.publicId;
-        const playerRowContent = await FileService.getViewContent('playerRow.html');
-
-        const playerRows = room.players.map(player => {
-            return Renderer.renderTemplate(playerRowContent, {
-                ...player,
-                self: player.publicId === publicId ? 'self' : '',
-            });
-        }).join('\n');
-
-        const chatMessageContent = await FileService.getViewContent('chatMessage.html');
-
-        const chatMessages = room.chatMessages.map(chatMessage => {
-            return Renderer.renderTemplate(chatMessageContent, {
-                ...chatMessage
-            });
-        }).join('\n');
-
         const model = {
             stylesheets: Renderer.buildStylesheetLinks('/style/lobby.css'),
-            playerRows,
             roomCode: room.roomCode,
             selfReady: player.ready,
+            username: player.username,
         };
         
         const lobbyViewPath = FileService.getViewPath('lobby.html');

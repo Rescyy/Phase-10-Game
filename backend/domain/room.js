@@ -18,10 +18,40 @@ export class Room extends Entity {
     addPlayer(player) {
         if (player instanceof Player) {
             this.players.push(player);
-            player.room = this;
             return;
         }
         throw new Error('player is not instance of Player');
+    }
+
+    hasPlayer(player) {
+        return this.players.some(x => x === player);
+    }
+
+    removePlayer(player) {
+        this.players = this.players.filter(x => x !== player);
+    }
+
+    buildRoomState() {
+        const players = this.players.map(player => {
+            return {
+                username: player.username,
+                publicId: player.publicId,
+                ready: player.ready,
+            };
+        });
+        return {
+            players,
+            timestamp: Date.now(),
+        };
+    }
+
+    broadcastRoomState() {
+        const roomState = this.buildRoomState();
+
+        this.players.forEach(playmate => {
+            console.log("sending " + playmate.username + " roomstate");
+            playmate.session.sendMessage('roomState', roomState);
+        });
     }
 }
 

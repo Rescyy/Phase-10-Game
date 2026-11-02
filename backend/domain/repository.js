@@ -56,7 +56,7 @@ export class Repository {
                 privateId: player.privateId,
                 username: player.username,
                 ready: player.ready,
-                room: player.room.roomCode,
+                room: player.room?.roomCode,
             }))
         };
     }

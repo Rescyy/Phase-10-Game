@@ -2,6 +2,7 @@
 
     <div class="lobby-header">
         <h1>Room {{roomCode}}</h1>
+        <h1>Your username: {{username}}</h1>
     </div>
 
     <div class="lobby-content" data-self-ready={{selfReady}}>
@@ -9,7 +10,7 @@
         <!-- Left: Players -->
         <section class="players-panel">
 
-            <button class="leave-button" onclick="window.location.href='/'">
+            <button id="leave-button" class="leave-button">
                 Leave Room
             </button>
 
@@ -20,7 +21,7 @@
 
                 <div id="players-list" class="players-list">
 
-                    {{playerRows}}
+                    <!-- {{playerRows}} -->
 
                 </div>
             </div>
@@ -66,6 +67,16 @@
         </section> -->
 
     </div>
+</div>
+<div id="lobby-disconnected" class="lobby-disconnected hidden">
+    <div class="lobby-header">
+        <h1>Connection lost...</h1>
+        <h1 id="lobby-disconnected-reason"></h1>
+    </div>
+
+    <button id="leave-button" class="leave-button">
+        Leave Room
+    </button>
 </div>
 <script src="/scripts/helper.js"></script>
 <script src="/scripts/websocket.js"></script>

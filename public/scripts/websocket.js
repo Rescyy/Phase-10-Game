@@ -15,11 +15,21 @@ class WebSocketWrapper {
         this.retries = 0;
         this.maxRetries = 5;
         this.reconnectPromise = null;
+        this.onFullCloseFunc = null;
     }
 
     async connect() {
         this.openSocket();
         await this.ensureConnection();
+    }
+
+    async disconnect(reason) {
+        if (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING) {
+            await new Promise(resolve => {
+                this.socket.addEventListener('close', resolve);
+                this.socket.close(1000, reason);
+            })
+        }
     }
 
     async sendMessage(name, payload) {
@@ -136,10 +146,7 @@ class WebSocketWrapper {
     }
 
     handleMessage(e) {
-        console.log("message received from server:", e.data);
-
         const message = JSON.parse(e.data);
-        const payload = message.payload;
 
         switch (message.direction) {
             case 'response':
@@ -168,6 +175,7 @@ class WebSocketWrapper {
                 this.shouldRetry = false;
                 this.closeCode = code;
                 console.log("Connection closed, stopped retrying");
+                this?.onFullCloseFunc(e.reason);
                 break;
         }
     }

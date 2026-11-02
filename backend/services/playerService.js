@@ -13,7 +13,14 @@ export class PlayerService {
             return null;
         }
 
-        return this.repository.getPlayerByPrivateId(privateId);
+
+        const player = this.repository.getPlayerByPrivateId(privateId);
+
+        if (player) {
+            this.cleanPlayerRoom(player);
+        }
+
+        return player;
     }
 
     static setPlayerPrivateId(res, privateId) {
@@ -25,5 +32,19 @@ export class PlayerService {
 
     static getPlayerPrivateId(req) {
         return req.cookies[PRIVATE_ID_KEY];
+    }
+
+    cleanPlayerRoom(player) {
+        const roomCode = player?.room?.roomCode;
+
+        if (!roomCode) {
+            return;
+        }
+
+        const room = this.repository.getRoomByRoomCode(roomCode);
+        
+        if (!room) {
+            player.room = null;
+        }
     }
 }

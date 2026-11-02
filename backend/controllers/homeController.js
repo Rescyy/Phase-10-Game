@@ -18,8 +18,8 @@ export class HomeController extends BaseController {
 
         const player = this.playerService.resolvePlayerFromCookie(req);
 
-        const roomCode = player?.room.roomCode;
-
+        const roomCode = player?.room?.roomCode;
+        
         const model = {
             buttons: {
                 connectBackTo: roomCode ? `<button class="button" onclick="window.location.href='/game/${roomCode}'">

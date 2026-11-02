@@ -1,12 +1,10 @@
 import path from "path";
-import { isValidPassword, isValidRoomCode, PASSWORD_LENGTH, randomRoomCode, Room, ROOM_CODE_CHARACTERS, ROOM_CODE_LENGTH } from "../domain/room.js";
+import { PASSWORD_LENGTH, randomRoomCode, Room, ROOM_CODE_CHARACTERS, ROOM_CODE_LENGTH } from "../domain/room.js";
 import { Renderer } from "../renderer.js";
 import { BaseController } from "./baseController.js";
-import { isValidUsername, Player, USERNAME_LENGTH } from "../domain/player.js";
+import { Player, USERNAME_LENGTH } from "../domain/player.js";
 import { FileService } from "../services/fileService.js";
 import { PlayerService } from "../services/playerService.js";
-import { RoomValidator } from "../validators/roomValidator.js";
-import { validationResult } from "express-validator";
 
 export class RoomController extends BaseController {
     constructor(services) {
@@ -70,12 +68,7 @@ export class RoomController extends BaseController {
         let player = this.playerService.resolvePlayerFromCookie(req);
 
         if (player !== null) {
-            const previousRoom = player.room;
             player.username = body.username;
-
-            if (previousRoom.players.length === 1) {
-                this.repository.deleteRoom(previousRoom);
-            }
         } else {
             player = new Player();
             player.username = body.username;
@@ -85,8 +78,14 @@ export class RoomController extends BaseController {
             PlayerService.setPlayerPrivateId(res, player.privateId);
         }
 
-        room.addPlayer(player);
-        
+        const previousRoom = player.room;
+        if (previousRoom && previousRoom.hasPlayer(player)) {
+            previousRoom.removePlayer(player);
+            previousRoom.broadcastRoomState();
+        }
+
+        player.room = room;
+
         return await this.gameRedirectResponse(res, room.roomCode);
     }
 
@@ -115,23 +114,22 @@ export class RoomController extends BaseController {
         let player = this.playerService.resolvePlayerFromCookie(req);
 
         if (player !== null) {
-            const previousRoom = player.room;
             player.username = body.username;
-
-            if (Object.is(previousRoom, room)) {
-                // Do nothing
-            } else if (previousRoom.players.length === 1) {
-                this.repository.deleteRoom(previousRoom);
-                room.addPlayer(player);
-            }
         } else {
             player = new Player();
             player.username = body.username;
             player.populateIds();
             this.repository.createPlayer(player);
             PlayerService.setPlayerPrivateId(res, player.privateId);
-            room.addPlayer(player);
         }
+
+        const previousRoom = player.room;
+        if (previousRoom && previousRoom !== room && previousRoom.hasPlayer(player)) {
+            previousRoom.removePlayer(player);
+            previousRoom.broadcastRoomState();
+        }
+
+        player.room = room;
 
         return await this.gameRedirectResponse(res, room.roomCode);
     }

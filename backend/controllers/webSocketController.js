@@ -1,21 +1,19 @@
 import { parseCookie } from 'cookie';
-import cookieParser from 'cookie-parser';
 import { match } from 'path-to-regexp';
-import url from 'url';
-import { PlayerConnectionState, PlayerSession } from '../domain/playerSession.js';
-import { Player } from '../domain/player.js';
+import { PlayerSession } from '../domain/playerSession.js';
+import { RoomSessionController } from './roomSessionController.js';
 
 const routeMatcher = match('/game/:roomCode', { decode: decodeURIComponent });
 
 export class WebSocketController {
     constructor(services) {
+        this.services = services;
         this.repository = services.repository;
         this.playerService = services.playerService;
-        this.roomSessionController = services.roomSessionController;
     }
 
-    async handleConnection(ws, req) {
-        const clientContext = await this.validateConnection(req, ws);
+    handleConnection(ws, req) {
+        const clientContext = this.validateConnection(req, ws);
 
         if (clientContext === null) {
             return;
@@ -23,14 +21,19 @@ export class WebSocketController {
 
         const { room, player } = clientContext;
 
-        player.session = new PlayerSession(player, ws);
-
-        this.roomSessionController.registerEndpoints(player.session);
+        console.log(player.username, room.roomCode);
+        if (player.session) {
+            player.session.replaceSocket(ws);
+        } else {
+            player.session = new PlayerSession(player, ws);
+        }
+        
+        new RoomSessionController(this.services, player, room).registerEndpoints(player.session);
+        
+        player.session.setPlayerConnected();
     }
 
     validateConnection(req, ws) {
-        const parsedUrl = url.parse(req.url);
-        
         const pathname = req.url.split('?')[0];
         const matchResult = routeMatcher(pathname);
         
@@ -38,14 +41,14 @@ export class WebSocketController {
             ws.close(4404, "Not found");
             return null;
         }
-
+        
         const room = this.repository.getRoomByRoomCode(matchResult.params.roomCode);
-
+        
         req.cookies = parseCookie(req.headers.cookie || '');
 
         const player = this.playerService.resolvePlayerFromCookie(req);
 
-        if (room === null || player === null) {
+        if (room === null || player === null || player.room !== room) {
             ws.close(4400, "Not associated with a room");
             return null;
         }

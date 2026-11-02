@@ -31,14 +31,13 @@ const services = {
     roomValidator,
     chatService,
 };
-services.roomSessionController = new RoomSessionController(services);
-
 const controllers = initialiseControllers(services);
 const webSocketController = new WebSocketController(services);
 wss.on('connection', async (ws, req) => await webSocketController.handleConnection(ws, req));
 
 initialiseEndpoints(app, controllers);
 
-server.listen(12345, () => {
-    console.log("Server started listening on port 12345");
+const port = 12345;
+server.listen(port, () => {
+    console.log("Server started listening on port " + port);
 });

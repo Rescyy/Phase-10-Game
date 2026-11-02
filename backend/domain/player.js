@@ -17,6 +17,10 @@ export class Player extends Entity {
         this.publicId = crypto.randomUUID();
         this.privateId = crypto.randomUUID();
     }
+
+    getPlaymates() {
+        return this.room?.players.filter(playmate => playmate !== this) ?? [];
+    }
 }
 
 export function isValidUsername(username) {
